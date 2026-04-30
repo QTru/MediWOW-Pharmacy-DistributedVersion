@@ -1,0 +1,1 @@
+# MediWOW-Pharmacy-DistributedVersion
