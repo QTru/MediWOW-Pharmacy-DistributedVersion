@@ -1,0 +1,59 @@
+package core.entities;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import core.entities.enums.InvoiceType;
+import core.entities.enums.PaymentMethod;
+import core.utils.idgenerator.implementation.GeneratedId;
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+@ToString(exclude = "invoiceLines")
+@Builder
+@EqualsAndHashCode(of = "id")
+
+@Entity
+@Table(name = "invoices")
+public class Invoice {
+    @Id
+    @GeneratedId(prefix = "INV", numberLength = 6)
+    @Column(name = "invoice_id")
+    private String id;
+    @Enumerated(EnumType.STRING)
+    private InvoiceType type;
+    private String note;
+    @Column(name = "creation_date")
+    private LocalDateTime creationDate;
+    @ManyToOne
+    @JoinColumn(name = "staff_id")
+    private Staff creator;
+    @ManyToOne
+    @JoinColumn(name = "shift_id")
+    private Shift shift;
+    @Column(name = "prescription_code")
+    private String prescriptionCode;
+    @ManyToOne
+    @JoinColumn(name = "customer_id")
+    private Customer customer;
+    @OneToMany(mappedBy = "invoice")
+    @JsonIgnore
+    private List<InvoiceLine> invoiceLines;
+    @ManyToOne
+    @JoinColumn(name = "promotion_id")
+    private Promotion promotion;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_method")
+    private PaymentMethod paymentMethod;
+    @OneToOne
+    @JoinColumn(name = "referenced_invoice_id")
+    private Invoice referencedInvoice;
+    @OneToOne
+    @JoinColumn(name = "parent_invoice_id")
+    private Invoice parentInvoice;
+}
