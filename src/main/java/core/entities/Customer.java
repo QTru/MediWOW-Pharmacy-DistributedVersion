@@ -18,7 +18,7 @@ import java.time.LocalDateTime;
 @Table(name = "customers")
 public class Customer {
     @Id
-    @GeneratedId(prefix = "CUST", numberLength = 4)
+    @GeneratedId(prefix = "CUST", numberLength = 4, sequenceName = "seq_customer_id")
     @Column(name = "customer_id")
     private String id;
     private String name;

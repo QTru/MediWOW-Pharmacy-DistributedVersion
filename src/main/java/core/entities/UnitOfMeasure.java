@@ -25,7 +25,7 @@ import java.math.RoundingMode;
 )
 public class UnitOfMeasure {
     @Id
-    @GeneratedId(prefix = "UOM", numberLength = 6)
+    @GeneratedId(prefix = "UOM", numberLength = 6, sequenceName = "seq_unit_of_measure_id")
     @Column(name = "unit_of_measure_id")
     private String id;
     @ManyToOne
@@ -37,6 +37,7 @@ public class UnitOfMeasure {
     private BigDecimal price;
     @Column(name = "base_unit_conversion_rate")
     private BigDecimal baseUnitConversionRate;
+    @Setter(AccessLevel.NONE)
     @Column(name = "base_price_conversion_rate")
     private BigDecimal basePriceConversionRate;
 

@@ -20,7 +20,7 @@ import java.time.LocalDateTime;
 @Table(name = "shifts")
 public class Shift {
     @Id
-    @GeneratedId(prefix = "SHI", numberLength = 6)
+    @GeneratedId(prefix = "SHI", numberLength = 6, sequenceName = "seq_shift_id")
     @Column(name = "shift_id")
     private String id;
     @ManyToOne

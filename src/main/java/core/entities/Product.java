@@ -15,7 +15,7 @@ import java.util.List;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@ToString(exclude = {"unitOfMeasures", "lots"})
+@ToString(exclude = {"baseUnitOfMeasure", "unitOfMeasures", "lots"})
 @Builder
 @EqualsAndHashCode(of = "id")
 
@@ -23,7 +23,7 @@ import java.util.List;
 @Table(name = "products")
 public class Product {
     @Id
-    @GeneratedId(prefix = "PRO", numberLength = 6)
+    @GeneratedId(prefix = "PRO", numberLength = 6, sequenceName = "seq_product_id")
     @Column(name = "product_id")
     private String id;
     private String barcode;

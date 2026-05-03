@@ -7,6 +7,8 @@ import core.utils.idgenerator.implementation.GeneratedId;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
+
 @Getter
 @Setter
 @AllArgsConstructor
@@ -19,7 +21,7 @@ import lombok.*;
 @Table(name = "promotion_conditions")
 public class PromotionCondition {
     @Id
-    @GeneratedId(prefix = "PROMC", numberLength = 6)
+    @GeneratedId(prefix = "PROMC", numberLength = 6, sequenceName = "seq_promotion_condition_id")
     @Column(name = "promotion_condition_id")
     private String id;
     @ManyToOne
@@ -31,7 +33,7 @@ public class PromotionCondition {
     private Comparator comparator;
     @Enumerated(EnumType.STRING)
     private Target target;
-    private double value;
+    private BigDecimal value;
     @ManyToOne
     @JoinColumn(name = "unit_of_measure_id")
     private UnitOfMeasure productUom;

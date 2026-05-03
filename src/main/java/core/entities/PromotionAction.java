@@ -20,7 +20,7 @@ import java.math.BigDecimal;
 @Table(name = "promotion_actions")
 public class PromotionAction {
     @Id
-    @GeneratedId(prefix = "PROMA", numberLength = 6)
+    @GeneratedId(prefix = "PROMA", numberLength = 6, sequenceName = "seq_promotion_action_id")
     @Column(name = "promotion_action_id")
     private String id;
     @ManyToOne

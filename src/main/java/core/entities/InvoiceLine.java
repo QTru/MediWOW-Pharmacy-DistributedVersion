@@ -28,7 +28,7 @@ import java.util.List;
 )
 public class InvoiceLine {
     @Id
-    @GeneratedId(prefix = "INL", numberLength = 6)
+    @GeneratedId(prefix = "INL", numberLength = 6, sequenceName = "seq_invoice_line_id")
     @Column(name = "invoice_line_id")
     private String id;
     @ManyToOne

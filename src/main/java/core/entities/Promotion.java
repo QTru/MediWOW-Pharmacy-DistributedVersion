@@ -20,7 +20,7 @@ import java.util.List;
 @Table(name = "promotions")
 public class Promotion {
     @Id
-    @GeneratedId(prefix = "PROM", numberLength = 6)
+    @GeneratedId(prefix = "PROM", numberLength = 6, sequenceName = "seq_promotion_id")
     @Column(name = "promotion_id")
     private String id;
     private String name;

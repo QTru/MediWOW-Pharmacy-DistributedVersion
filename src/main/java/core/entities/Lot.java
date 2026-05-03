@@ -6,7 +6,7 @@ import core.utils.idgenerator.implementation.GeneratedId;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.math.BigInteger;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -22,7 +22,7 @@ import java.util.List;
 @Table(name = "lots")
 public class Lot {
     @Id
-    @GeneratedId(prefix = "LOT", numberLength = 6)
+    @GeneratedId(prefix = "LOT", numberLength = 6, sequenceName = "seq_lot_id")
     @Column(name = "lot_id")
     private String id;
     @Column(name = "batch_number")
@@ -32,7 +32,7 @@ public class Lot {
     private Product product;
     private int quantity;
     @Column(name = "raw_price")
-    private BigInteger rawPrice;
+    private BigDecimal rawPrice;
     @Column(name = "expiry_date")
     private LocalDateTime expiryDate;
     @Enumerated(EnumType.STRING)

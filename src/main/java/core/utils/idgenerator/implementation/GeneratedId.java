@@ -13,5 +13,6 @@ import java.lang.annotation.Target;
 @Target({ElementType.FIELD, ElementType.METHOD})
 public @interface GeneratedId {
     String prefix();
-    int numberLength() default 6;
+    int numberLength() default 4;
+    String sequenceName(); // ← add this
 }

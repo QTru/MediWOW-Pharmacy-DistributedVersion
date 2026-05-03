@@ -14,10 +14,12 @@ import java.util.EnumSet;
 public class GenericIdGenerator implements BeforeExecutionGenerator {
     private final String prefix;
     private final int numberLength;
+    private final String sequenceName;
 
     public GenericIdGenerator(GeneratedId annotation, Member member, GeneratorCreationContext context) {
         this.prefix = annotation.prefix();
         this.numberLength = annotation.numberLength();
+        this.sequenceName = annotation.sequenceName();
     }
 
     @Override
@@ -27,10 +29,10 @@ public class GenericIdGenerator implements BeforeExecutionGenerator {
 
     @Override
     public Object generate(SharedSessionContractImplementor session, Object owner, Object currentValue, EventType eventType) {
-        String query = "SELECT COUNT(e) FROM " + owner.getClass().getSimpleName() + " e";
-        Long count = session.unwrap(Session.class)
-                .createSelectionQuery(query, Long.class)
-                .getSingleResult();
-        return prefix + String.format("%0" + numberLength + "d", count + 1);
+        Long next = session.unwrap(Session.class)
+                .createNativeQuery("SELECT NEXT VALUE FOR " + sequenceName, Number.class)
+                .getSingleResult()
+                .longValue();
+        return prefix + String.format("%0" + numberLength + "d", next);
     }
 }

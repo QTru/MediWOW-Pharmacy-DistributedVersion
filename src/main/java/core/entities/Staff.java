@@ -13,7 +13,7 @@ import java.util.List;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@ToString(exclude = {"shifts", "closedShifts"})
+@ToString(exclude = {"password", "shifts", "closedShifts"})
 @Builder
 @EqualsAndHashCode(of = "id")
 
@@ -21,10 +21,11 @@ import java.util.List;
 @Table(name = "staffs")
 public class Staff {
     @Id
-    @GeneratedId(prefix = "STA", numberLength = 4)
+    @GeneratedId(prefix = "STA", numberLength = 4, sequenceName = "seq_staff_id")
     @Column(name = "staff_id")
     private String id;
     private String username;
+    @JsonIgnore
     private String password;
     @Column(name = "full_name")
     private String fullName;

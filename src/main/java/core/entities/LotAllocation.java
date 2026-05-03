@@ -22,7 +22,7 @@ import lombok.*;
 )
 public class LotAllocation {
     @Id
-    @GeneratedId(prefix = "LOA", numberLength = 6)
+    @GeneratedId(prefix = "LOA", numberLength = 6, sequenceName = "seq_lot_allocation_id")
     @Column(name = "lot_allocation_id")
     private String id;
     @ManyToOne
