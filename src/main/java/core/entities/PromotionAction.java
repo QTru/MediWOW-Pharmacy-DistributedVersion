@@ -21,7 +21,7 @@ import java.math.BigDecimal;
 public class PromotionAction {
     @Id
     @GeneratedId(prefix = "PROMA", numberLength = 6, sequenceName = "seq_promotion_action_id")
-    @Column(name = "promotion_action_id")
+    @Column(name = "promotion_action_id", length = 20)
     private String id;
     @ManyToOne
     @JoinColumn(name = "promotion_id")
@@ -34,7 +34,10 @@ public class PromotionAction {
     private Target target;
     private BigDecimal value;
     @ManyToOne
-    @JoinColumn(name = "unit_of_measure_id")
+    @JoinColumns({
+            @JoinColumn(name = "uom_product_id",          columnDefinition = "varchar(20)", referencedColumnName = "product_id"),
+            @JoinColumn(name = "uom_measurement_name_id", columnDefinition = "varchar(20)", referencedColumnName = "measurement_name_id")
+    })
     private UnitOfMeasure productUom;
 
     @Transient

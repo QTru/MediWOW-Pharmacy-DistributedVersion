@@ -21,7 +21,7 @@ import java.time.LocalDateTime;
 public class Shift {
     @Id
     @GeneratedId(prefix = "SHI", numberLength = 6, sequenceName = "seq_shift_id")
-    @Column(name = "shift_id")
+    @Column(name = "shift_id", length = 20)
     private String id;
     @ManyToOne
     @JoinColumn(name = "staff_id")
