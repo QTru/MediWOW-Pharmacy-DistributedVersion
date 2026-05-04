@@ -20,7 +20,7 @@ import lombok.*;
 public class MeasurementName {
     @Id
     @GeneratedId(prefix = "MEA", numberLength = 4, sequenceName = "seq_measurement_name_id")
-    @Column(name = "measurement_name_id")
+    @Column(name = "measurement_name_id", length = 20)
     private String id;
     private String name;
 }

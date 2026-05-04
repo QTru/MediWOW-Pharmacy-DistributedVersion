@@ -24,7 +24,7 @@ import java.util.List;
 public class Product {
     @Id
     @GeneratedId(prefix = "PRO", numberLength = 6, sequenceName = "seq_product_id")
-    @Column(name = "product_id")
+    @Column(name = "product_id", length = 20)
     private String id;
     private String barcode;
     @Enumerated(EnumType.STRING)
@@ -40,7 +40,10 @@ public class Product {
     private String strength;
     private String description;
     @OneToOne
-    @JoinColumn(name = "unit_of_measure_id")
+    @JoinColumns({
+            @JoinColumn(name = "base_uom_product_id",          columnDefinition = "varchar(20)", referencedColumnName = "product_id"),
+            @JoinColumn(name = "base_uom_measurement_name_id", columnDefinition = "varchar(20)", referencedColumnName = "measurement_name_id")
+    })
     private UnitOfMeasure baseUnitOfMeasure;
     @OneToMany(mappedBy = "product")
     @JsonIgnore

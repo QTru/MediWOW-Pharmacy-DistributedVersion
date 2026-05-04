@@ -6,6 +6,7 @@ import core.utils.idgenerator.implementation.GeneratedId;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
@@ -16,28 +17,26 @@ import java.util.List;
 @NoArgsConstructor
 @ToString(exclude = "lotAllocations")
 @Builder
-@EqualsAndHashCode(of = "id")
+@EqualsAndHashCode(of = {"invoice", "unitOfMeasure", "type"})
 
 @Entity
-@Table(
-        name = "invoice_lines",
-        uniqueConstraints = @UniqueConstraint(
-                name = "uk_invoiceline_invoice_uom_type",
-                columnNames = {"invoice_id", "unit_of_measure_id", "type"}
-        )
-)
+@Table(name = "invoice_lines")
+@IdClass(InvoiceLine.InvoiceLineId.class)
 public class InvoiceLine {
     @Id
-    @GeneratedId(prefix = "INL", numberLength = 6, sequenceName = "seq_invoice_line_id")
-    @Column(name = "invoice_line_id")
-    private String id;
     @ManyToOne
-    @JoinColumn(name =  "invoice_id")
+    @JoinColumn(name = "invoice_id", columnDefinition = "varchar(20)")
     private Invoice invoice;
+    @Id
     @ManyToOne
-    @JoinColumn(name = "unit_of_measure_id")
+    @JoinColumns({
+            @JoinColumn(name = "uom_product_id",          columnDefinition = "varchar(20)", referencedColumnName = "product_id"),
+            @JoinColumn(name = "uom_measurement_name_id", columnDefinition = "varchar(20)", referencedColumnName = "measurement_name_id")
+    })
     private UnitOfMeasure unitOfMeasure;
+    @Id
     @Enumerated(EnumType.STRING)
+    @Column(columnDefinition = "varchar(20)")
     private InvoiceLineType type;
     @Column(name = "unit_price")
     private BigDecimal unitPrice;
@@ -45,6 +44,19 @@ public class InvoiceLine {
     @OneToMany(mappedBy = "invoiceLine")
     @JsonIgnore
     private List<LotAllocation> lotAllocations;
+
+    @Getter
+    @Setter
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @ToString
+    @Builder
+    @EqualsAndHashCode
+    public static class InvoiceLineId implements Serializable {
+        private String invoice;
+        private UnitOfMeasure.UnitOfMeasureId unitOfMeasure;
+        private InvoiceLineType type;
+    }
 
     @Transient
     public Product getProduct() {

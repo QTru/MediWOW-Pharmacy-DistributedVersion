@@ -21,7 +21,7 @@ import java.util.List;
 public class Promotion {
     @Id
     @GeneratedId(prefix = "PROM", numberLength = 6, sequenceName = "seq_promotion_id")
-    @Column(name = "promotion_id")
+    @Column(name = "promotion_id", length = 20)
     private String id;
     private String name;
     private String description;

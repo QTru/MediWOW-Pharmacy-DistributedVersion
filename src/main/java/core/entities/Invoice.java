@@ -23,7 +23,7 @@ import java.util.List;
 public class Invoice {
     @Id
     @GeneratedId(prefix = "INV", numberLength = 6, sequenceName = "seq_invoice_id")
-    @Column(name = "invoice_id")
+    @Column(name = "invoice_id", length = 20)
     private String id;
     @Enumerated(EnumType.STRING)
     private InvoiceType type;

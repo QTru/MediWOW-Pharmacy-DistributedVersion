@@ -19,7 +19,7 @@ import java.time.LocalDateTime;
 public class Customer {
     @Id
     @GeneratedId(prefix = "CUST", numberLength = 4, sequenceName = "seq_customer_id")
-    @Column(name = "customer_id")
+    @Column(name = "customer_id", length = 20)
     private String id;
     private String name;
     @Column(name = "phone_number")

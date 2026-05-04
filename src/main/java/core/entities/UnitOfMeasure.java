@@ -4,6 +4,7 @@ import core.utils.idgenerator.implementation.GeneratedId;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
@@ -13,26 +14,19 @@ import java.math.RoundingMode;
 @NoArgsConstructor
 @ToString
 @Builder
-@EqualsAndHashCode(of = "id")
+@EqualsAndHashCode(of = {"product", "measurementName"})
 
 @Entity
-@Table(
-        name = "unit_of_measures",
-        uniqueConstraints = @UniqueConstraint(
-                name = "uk_uom_product_measurement",
-                columnNames = {"product_id", "measurement_name_id"}
-        )
-)
+@Table(name = "unit_of_measures")
+@IdClass(UnitOfMeasure.UnitOfMeasureId.class)
 public class UnitOfMeasure {
     @Id
-    @GeneratedId(prefix = "UOM", numberLength = 6, sequenceName = "seq_unit_of_measure_id")
-    @Column(name = "unit_of_measure_id")
-    private String id;
     @ManyToOne
-    @JoinColumn(name = "product_id")
+    @JoinColumn(name = "product_id", columnDefinition = "varchar(20)")
     private Product product;
+    @Id
     @ManyToOne
-    @JoinColumn(name = "measurement_name_id")
+    @JoinColumn(name = "measurement_name_id", columnDefinition = "varchar(20)")
     private MeasurementName measurementName;
     private BigDecimal price;
     @Column(name = "base_unit_conversion_rate")
@@ -40,6 +34,18 @@ public class UnitOfMeasure {
     @Setter(AccessLevel.NONE)
     @Column(name = "base_price_conversion_rate")
     private BigDecimal basePriceConversionRate;
+
+    @Getter
+    @Setter
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @ToString
+    @Builder
+    @EqualsAndHashCode
+    public static class UnitOfMeasureId implements Serializable {
+        private String product;
+        private String measurementName;
+    }
 
     @PrePersist
     @PreUpdate

@@ -4,32 +4,44 @@ import core.utils.idgenerator.implementation.GeneratedId;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.io.Serializable;
+
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString
 @Builder
-@EqualsAndHashCode(of = "id")
+@EqualsAndHashCode(of = {"invoiceLine", "lot"})
 
 @Entity
-@Table(
-        name = "lot_allocations",
-        uniqueConstraints = @UniqueConstraint(
-                name = "uk_lotallocation_invoiceline_lot",
-                columnNames = {"invoice_line_id", "lot_id"}
-        )
-)
+@Table(name = "lot_allocations")
+@IdClass(LotAllocation.LotAllocationId.class)
 public class LotAllocation {
     @Id
-    @GeneratedId(prefix = "LOA", numberLength = 6, sequenceName = "seq_lot_allocation_id")
-    @Column(name = "lot_allocation_id")
-    private String id;
     @ManyToOne
-    @JoinColumn(name = "invoice_line_id")
+    @JoinColumns({
+            @JoinColumn(name = "invoice_id",              columnDefinition = "varchar(20)", referencedColumnName = "invoice_id"),
+            @JoinColumn(name = "uom_product_id",          columnDefinition = "varchar(20)", referencedColumnName = "uom_product_id"),
+            @JoinColumn(name = "uom_measurement_name_id", columnDefinition = "varchar(20)", referencedColumnName = "uom_measurement_name_id"),
+            @JoinColumn(name = "type",                    columnDefinition = "varchar(20)", referencedColumnName = "type")
+    })
     private InvoiceLine invoiceLine;
+    @Id
     @ManyToOne
-    @JoinColumn(name = "lot_id")
+    @JoinColumn(name = "lot_id", columnDefinition = "varchar(20)")
     private Lot lot;
     private int quantity;
+
+    @Getter
+    @Setter
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @ToString
+    @Builder
+    @EqualsAndHashCode
+    public static class LotAllocationId implements Serializable {
+        private InvoiceLine.InvoiceLineId invoiceLine;
+        private String lot;
+    }
 }
