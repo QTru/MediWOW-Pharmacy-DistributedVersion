@@ -25,7 +25,7 @@ public class ProductDto {
     private BigDecimal vat;
     private String strength;
     private String description;
-    private String baseUnitOfMeasureId;
-    private String baseUnitOfMeasureName;
+    private String baseMeasurementId;
+    private String baseMeasurementName;
     private LocalDateTime creationDate;
 }

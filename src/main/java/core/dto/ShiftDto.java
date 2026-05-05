@@ -2,10 +2,17 @@ package core.dto;
 
 import core.entities.enums.Role;
 import core.entities.enums.ShiftStatus;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+@ToString
+@Builder
 public class ShiftDto {
     private String id;
     private String staffId;

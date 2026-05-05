@@ -21,7 +21,9 @@ public class InvoiceDto {
     private String creatorFullName;
     private String shiftId;
     private String prescriptionCode;
+    private String customerId;
     private String customerPhoneNumber;
+    private String promotionId;
     private String promotionName;
     private PaymentMethod paymentMethod;
     private String referencedInvoiceId;
