@@ -10,7 +10,7 @@
         <class>core.entities.InvoiceLine</class>
         <class>core.entities.Lot</class>
         <class>core.entities.LotAllocation</class>
-        <class>core.entities.MeasurementName</class>
+        <class>core.entities.Measurement</class>
         <class>core.entities.Product</class>
         <class>core.entities.Promotion</class>
         <class>core.entities.PromotionAction</class>

@@ -23,7 +23,7 @@ public class LotAllocation {
     @JoinColumns({
             @JoinColumn(name = "invoice_id",              columnDefinition = "varchar(20)", referencedColumnName = "invoice_id"),
             @JoinColumn(name = "uom_product_id",          columnDefinition = "varchar(20)", referencedColumnName = "uom_product_id"),
-            @JoinColumn(name = "uom_measurement_name_id", columnDefinition = "varchar(20)", referencedColumnName = "uom_measurement_name_id"),
+            @JoinColumn(name = "uom_measurement_id", columnDefinition = "varchar(20)", referencedColumnName = "uom_measurement_id"),
             @JoinColumn(name = "type",                    columnDefinition = "varchar(20)", referencedColumnName = "type")
     })
     private InvoiceLine invoiceLine;

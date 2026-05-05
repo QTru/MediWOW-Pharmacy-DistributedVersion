@@ -36,7 +36,7 @@ public class PromotionAction {
     @ManyToOne
     @JoinColumns({
             @JoinColumn(name = "uom_product_id",          columnDefinition = "varchar(20)", referencedColumnName = "product_id"),
-            @JoinColumn(name = "uom_measurement_name_id", columnDefinition = "varchar(20)", referencedColumnName = "measurement_name_id")
+            @JoinColumn(name = "uom_measurement_id", columnDefinition = "varchar(20)", referencedColumnName = "measurement_id")
     })
     private UnitOfMeasure productUom;
 
