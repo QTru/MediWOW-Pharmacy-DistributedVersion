@@ -13,6 +13,7 @@ import java.math.BigDecimal;
 public class UnitOfMeasureDto {
     private String productId;
     private String measurementId;
+    private String measurementName;
     private BigDecimal price;
     private BigDecimal baseUnitConversionRate;
     private BigDecimal basePriceConversionRate;

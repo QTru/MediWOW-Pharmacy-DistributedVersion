@@ -19,6 +19,7 @@ public class PromotionActionDto {
     private ActionType type;
     private Target target;
     private BigDecimal value;
-    private String productUomProductId;
-    private String productUomMeasurementId;
+    private String productId;
+    private String measurementId;
+    private String measurementName;
 }

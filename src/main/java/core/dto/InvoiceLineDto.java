@@ -14,8 +14,8 @@ import java.math.BigDecimal;
 public class InvoiceLineDto {
     private String invoiceId;
     private String productId;
-    private String measurementNameId;
-    private String measurementNameName;
+    private String measurementId;
+    private String measurementName;
     private InvoiceLineType type;
     private BigDecimal unitPrice;
     private int quantity;

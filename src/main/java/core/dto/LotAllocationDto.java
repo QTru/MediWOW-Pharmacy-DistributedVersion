@@ -14,8 +14,8 @@ import java.time.LocalDateTime;
 @Builder
 public class LotAllocationDto {
     private String invoiceId;
-    private String uomProductId;
-    private String uomMeasurementId;
+    private String productId;
+    private String measurementId;
     private InvoiceLineType invoiceLineType;
     private String lotId;
     private LocalDateTime expiryDate;
