@@ -1,6 +1,5 @@
 package core.entities;
 
-import core.utils.idgenerator.implementation.GeneratedId;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -14,7 +13,7 @@ import java.math.RoundingMode;
 @NoArgsConstructor
 @ToString
 @Builder
-@EqualsAndHashCode(of = {"product", "measurementName"})
+@EqualsAndHashCode(of = {"product", "measurement"})
 
 @Entity
 @Table(name = "unit_of_measures")
@@ -26,8 +25,8 @@ public class UnitOfMeasure {
     private Product product;
     @Id
     @ManyToOne
-    @JoinColumn(name = "measurement_name_id", columnDefinition = "varchar(20)")
-    private MeasurementName measurementName;
+    @JoinColumn(name = "measurement_id", columnDefinition = "varchar(20)")
+    private Measurement measurement;
     private BigDecimal price;
     @Column(name = "base_unit_conversion_rate")
     private BigDecimal baseUnitConversionRate;
@@ -44,7 +43,7 @@ public class UnitOfMeasure {
     @EqualsAndHashCode
     public static class UnitOfMeasureId implements Serializable {
         private String product;
-        private String measurementName;
+        private String measurement;
     }
 
     @PrePersist
