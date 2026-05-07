@@ -6,6 +6,7 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Setter
@@ -25,7 +26,7 @@ public class ProductDto {
     private BigDecimal vat;
     private String strength;
     private String description;
-    private String baseMeasurementId;
-    private String baseMeasurementName;
+    private UnitOfMeasureDto baseUnitOfMeasure;
+    private List<UnitOfMeasureDto> unitOfMeasures;
     private LocalDateTime creationDate;
 }

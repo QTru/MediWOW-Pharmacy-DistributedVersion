@@ -21,11 +21,11 @@ import java.math.RoundingMode;
 public class UnitOfMeasure {
     @Id
     @ManyToOne
-    @JoinColumn(name = "product_id", columnDefinition = "varchar(20)")
+    @JoinColumn(name = "product_id", nullable = false, columnDefinition = "varchar(20)")
     private Product product;
     @Id
-    @ManyToOne
-    @JoinColumn(name = "measurement_id", columnDefinition = "varchar(20)")
+    @ManyToOne(cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "measurement_id", nullable = false, columnDefinition = "varchar(20)")
     private Measurement measurement;
     private BigDecimal price;
     @Column(name = "base_unit_conversion_rate")

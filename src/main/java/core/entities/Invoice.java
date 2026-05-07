@@ -14,7 +14,7 @@ import java.util.List;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@ToString(exclude = "invoiceLines")
+@ToString(exclude = {"invoiceLines", "parentInvoice"})
 @Builder
 @EqualsAndHashCode(of = "id")
 
@@ -23,7 +23,7 @@ import java.util.List;
 public class Invoice {
     @Id
     @GeneratedId(prefix = "INV", numberLength = 6, sequenceName = "seq_invoice_id")
-    @Column(name = "invoice_id", length = 20)
+    @Column(name = "invoice_id", length = 20, nullable = false)
     private String id;
     @Enumerated(EnumType.STRING)
     private InvoiceType type;
@@ -41,7 +41,7 @@ public class Invoice {
     @ManyToOne
     @JoinColumn(name = "customer_id")
     private Customer customer;
-    @OneToMany(mappedBy = "invoice")
+    @OneToMany(mappedBy = "invoice", cascade = CascadeType.PERSIST)
     @JsonIgnore
     private List<InvoiceLine> invoiceLines;
     @ManyToOne

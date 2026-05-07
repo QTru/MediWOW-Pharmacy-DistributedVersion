@@ -22,7 +22,7 @@ import java.util.List;
 public class Staff {
     @Id
     @GeneratedId(prefix = "STA", numberLength = 4, sequenceName = "seq_staff_id")
-    @Column(name = "staff_id", length = 20)
+    @Column(name = "staff_id", length = 20, nullable = false)
     private String id;
     private String username;
     @JsonIgnore
@@ -31,7 +31,7 @@ public class Staff {
     private String fullName;
     @Column(name = "license_number")
     private String licenseNumber;
-    @Column(name = "phone_number")
+    @Column(name = "phone_number", unique = true, nullable = false)
     private String phoneNumber;
     private String email;
     @Column(name = "hire_date")

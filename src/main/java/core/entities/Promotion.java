@@ -21,7 +21,7 @@ import java.util.List;
 public class Promotion {
     @Id
     @GeneratedId(prefix = "PROM", numberLength = 6, sequenceName = "seq_promotion_id")
-    @Column(name = "promotion_id", length = 20)
+    @Column(name = "promotion_id", length = 20, nullable = false)
     private String id;
     private String name;
     private String description;
@@ -32,10 +32,10 @@ public class Promotion {
     @Column(name = "end_date")
     private LocalDateTime endDate;
     private boolean active;
-    @OneToMany(mappedBy = "promotion")
+    @OneToMany(mappedBy = "promotion", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JsonIgnore
     private List<PromotionCondition> conditions;
-    @OneToMany(mappedBy = "promotion")
+    @OneToMany(mappedBy = "promotion", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JsonIgnore
     private List<PromotionAction> actions;
 }

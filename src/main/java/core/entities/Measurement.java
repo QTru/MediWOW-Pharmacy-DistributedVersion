@@ -1,10 +1,7 @@
 package core.entities;
 
 import core.utils.idgenerator.implementation.GeneratedId;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.*;
 
 @Getter
@@ -20,7 +17,8 @@ import lombok.*;
 public class Measurement {
     @Id
     @GeneratedId(prefix = "MEA", numberLength = 4, sequenceName = "seq_measurement_id")
-    @Column(name = "measurement_id", length = 20)
+    @Column(name = "measurement_id", length = 20, nullable = false)
     private String id;
+    @Column(nullable = false, unique = true)
     private String name;
 }

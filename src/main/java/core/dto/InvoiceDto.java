@@ -5,12 +5,13 @@ import core.entities.enums.PaymentMethod;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@ToString
+@ToString(exclude = "invoiceLines")
 @Builder
 public class InvoiceDto {
     private String id;
@@ -21,8 +22,8 @@ public class InvoiceDto {
     private String creatorFullName;
     private String shiftId;
     private String prescriptionCode;
-    private String customerId;
     private String customerPhoneNumber;
+    private List<InvoiceLineDto> invoiceLines;
     private String promotionId;
     private String promotionName;
     private PaymentMethod paymentMethod;
