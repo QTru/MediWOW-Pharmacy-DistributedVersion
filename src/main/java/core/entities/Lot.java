@@ -25,17 +25,19 @@ public class Lot {
     @GeneratedId(prefix = "LOT", numberLength = 6, sequenceName = "seq_lot_id")
     @Column(name = "lot_id", length = 20, nullable = false)
     private String id;
-    @Column(name = "batch_number")
+    @Column(name = "batch_number", nullable = false)
     private int batchNumber;
     @ManyToOne
     @JoinColumn(name = "product_id")
     private Product product;
+    @Column(nullable = false)
     private int quantity;
-    @Column(name = "raw_price")
+    @Column(name = "raw_price", nullable = false)
     private BigDecimal rawPrice;
-    @Column(name = "expiry_date")
+    @Column(name = "expiry_date", nullable = false)
     private LocalDateTime expiryDate;
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private LotStatus status;
     @OneToMany(mappedBy = "lot")
     @JsonIgnore

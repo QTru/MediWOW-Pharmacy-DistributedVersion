@@ -22,7 +22,7 @@ public class Customer {
     @Column(name = "customer_id", length = 20, nullable = false)
     private String id;
     private String name;
-    @Column(name = "phone_number")
+    @Column(name = "phone_number", unique = true, nullable = false)
     private String phoneNumber;
     private String address;
     @Column(name = "creation_date")

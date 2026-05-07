@@ -26,7 +26,7 @@ public class PromotionAction {
     @ManyToOne
     @JoinColumn(name = "promotion_id", nullable = false)
     private Promotion promotion;
-    @Column(name = "action_order")
+    @Column(name = "action_order", nullable = false)
     private int actionOrder;
     @Enumerated(EnumType.STRING)
     private ActionType type;

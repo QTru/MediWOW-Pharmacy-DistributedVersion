@@ -24,26 +24,27 @@ public class Shift {
     @Column(name = "shift_id", length = 20, nullable = false)
     private String id;
     @ManyToOne
-    @JoinColumn(name = "staff_id")
+    @JoinColumn(name = "staff_id", nullable = false)
     private Staff staff;
-    @Column(name = "start_time")
+    @Column(name = "start_time", nullable = false)
     private LocalDateTime startTime;
-    @Column(name = "end_time")
+    @Column(name = "end_time", nullable = false)
     private LocalDateTime endTime;
-    @Column(name = "start_money")
+    @Column(name = "start_money", nullable = false)
     private BigDecimal startMoney;
-    @Column(name = "end_money")
+    @Column(name = "end_money", nullable = false)
     private BigDecimal endMoney;
-    @Column(name = "system_money")
+    @Column(name = "system_money", nullable = false)
     private BigDecimal systemMoney;
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private ShiftStatus status;
     private String notes;
-    @Column(name = "work_station")
+    @Column(name = "work_station", nullable = false)
     private String workStation;
     @ManyToOne
-    @JoinColumn(name = "closed_by_staff_id")
+    @JoinColumn(name = "closed_by_staff_id", nullable = false)
     private Staff closedByStaff;
-    @Column(name = "closing_reason")
+    @Column(name = "closing_reason", nullable = false)
     private String closingReason;
 }
