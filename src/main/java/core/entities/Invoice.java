@@ -26,9 +26,10 @@ public class Invoice {
     @Column(name = "invoice_id", length = 20, nullable = false)
     private String id;
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private InvoiceType type;
     private String note;
-    @Column(name = "creation_date")
+    @Column(name = "creation_date", nullable = false)
     private LocalDateTime creationDate;
     @ManyToOne
     @JoinColumn(name = "staff_id")

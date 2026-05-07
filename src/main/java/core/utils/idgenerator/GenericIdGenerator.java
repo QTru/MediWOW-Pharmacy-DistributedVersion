@@ -1,6 +1,7 @@
 package core.utils.idgenerator;
 
 import core.utils.idgenerator.implementation.GeneratedId;
+import org.hibernate.FlushMode;
 import org.hibernate.Session;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.generator.BeforeExecutionGenerator;
@@ -29,10 +30,17 @@ public class GenericIdGenerator implements BeforeExecutionGenerator {
 
     @Override
     public Object generate(SharedSessionContractImplementor session, Object owner, Object currentValue, EventType eventType) {
-        Long next = session.unwrap(Session.class)
-                .createNativeQuery("SELECT NEXT VALUE FOR " + sequenceName, Number.class)
-                .getSingleResult()
-                .longValue();
-        return prefix + String.format("%0" + numberLength + "d", next);
+        Session hibernateSession = session.unwrap(Session.class);
+        FlushMode originalFlushMode = hibernateSession.getHibernateFlushMode();
+        hibernateSession.setHibernateFlushMode(FlushMode.COMMIT);
+
+        try {
+            String result = hibernateSession
+                    .createNativeQuery("SELECT nextval(" + sequenceName + ")", String.class)
+                    .getSingleResult();
+            return prefix + String.format("%0" + numberLength + "d", Long.parseLong(result));
+        } finally {
+            hibernateSession.setHibernateFlushMode(originalFlushMode);
+        }
     }
 }

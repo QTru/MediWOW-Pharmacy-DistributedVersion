@@ -28,6 +28,7 @@ public class PromotionCondition {
     @JoinColumn(name = "promotion_id", nullable = false)
     private Promotion promotion;
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private ConditionType type;
     @Enumerated(EnumType.STRING)
     private Comparator comparator;

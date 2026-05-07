@@ -40,6 +40,7 @@ public class InvoiceLine {
     private InvoiceLineType type;
     @Column(name = "unit_price")
     private BigDecimal unitPrice;
+    @Column(nullable = false)
     private int quantity;
     @OneToMany(mappedBy = "invoiceLine", cascade = CascadeType.PERSIST)
     private List<LotAllocation> lotAllocations;

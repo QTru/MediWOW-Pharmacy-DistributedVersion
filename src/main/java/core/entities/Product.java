@@ -26,11 +26,13 @@ public class Product {
     @GeneratedId(prefix = "PRO", numberLength = 6, sequenceName = "seq_product_id")
     @Column(name = "product_id", length = 20, nullable = false)
     private String id;
+    @Column(nullable = false, unique = true)
     private String barcode;
     @Enumerated(EnumType.STRING)
     private ProductCategory category;
     @Enumerated(EnumType.STRING)
     private DosageForm form;
+    @Column(nullable = false)
     private String name;
     @Column(name = "short_name")
     private String shortName;
@@ -39,13 +41,7 @@ public class Product {
     private BigDecimal vat;
     private String strength;
     private String description;
-    @OneToOne(cascade = CascadeType.PERSIST)
-    @JoinColumns({
-            @JoinColumn(name = "base_uom_product_id",     columnDefinition = "varchar(20)", referencedColumnName = "product_id"),
-            @JoinColumn(name = "base_uom_measurement_id", columnDefinition = "varchar(20)", referencedColumnName = "measurement_id")
-    })
-    private UnitOfMeasure baseUnitOfMeasure;
-    @OneToMany(mappedBy = "product")
+    @OneToMany(mappedBy = "product", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
     @JsonIgnore
     private List<UnitOfMeasure> unitOfMeasures;
     @OneToMany(mappedBy = "product")

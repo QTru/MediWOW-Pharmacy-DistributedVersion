@@ -28,10 +28,10 @@ public class Mapper {
         }
         if (invoice.getShift() != null)
             invoiceDto.setShiftId(invoice.getShift().getId());
-        if (invoice.getCustomer() != null) {
-            invoiceDto.setCustomerId(invoice.getCustomer().getId());
+        if (invoice.getCustomer() != null)
             invoiceDto.setCustomerPhoneNumber(invoice.getCustomer().getPhoneNumber());
-        }
+        if (invoice.getInvoiceLines() != null)
+            invoiceDto.setInvoiceLines(invoice.getInvoiceLines().stream().map(Mapper::map).toList());
         if (invoice.getPromotion() != null) {
             invoiceDto.setPromotionId(invoice.getPromotion().getId());
             invoiceDto.setPromotionName(invoice.getPromotion().getName());
@@ -51,8 +51,10 @@ public class Mapper {
             invoice.setCreator(Staff.builder().id(invoiceDto.getCreatorId()).build());
         if (invoiceDto.getShiftId() != null)
             invoice.setShift(Shift.builder().id(invoiceDto.getShiftId()).build());
-        if (invoiceDto.getCustomerId() != null)
-            invoice.setCustomer(Customer.builder().id(invoiceDto.getCustomerId()).build());
+        if (invoiceDto.getCustomerPhoneNumber() != null)
+            invoice.setCustomer(Customer.builder().phoneNumber(invoiceDto.getCustomerPhoneNumber()).build());
+        if (invoiceDto.getInvoiceLines() != null)
+            invoice.setInvoiceLines(invoiceDto.getInvoiceLines().stream().map(Mapper::map).toList());
         if (invoiceDto.getPromotionId() != null)
             invoice.setPromotion(Promotion.builder().id(invoiceDto.getPromotionId()).build());
         if (invoiceDto.getReferencedInvoiceId() != null)
@@ -73,6 +75,8 @@ public class Mapper {
             invoiceLineDto.setMeasurementId(invoiceLine.getUnitOfMeasure().getMeasurement().getId());
             invoiceLineDto.setMeasurementName(invoiceLine.getUnitOfMeasure().getMeasurement().getName());
         }
+        if (invoiceLine.getLotAllocations() != null)
+            invoiceLineDto.setLotAllocations(invoiceLine.getLotAllocations().stream().map(Mapper::map).toList());
 
         return invoiceLineDto;
     }
@@ -87,6 +91,8 @@ public class Mapper {
                     .product(Product.builder().id(invoiceLineDto.getProductId()).build())
                     .measurement(Measurement.builder().id(invoiceLineDto.getMeasurementId()).build())
                     .build());
+        if (invoiceLineDto.getLotAllocations() != null)
+            invoiceLine.setLotAllocations(invoiceLineDto.getLotAllocations().stream().map(Mapper::map).toList());
 
         return invoiceLine;
     }
@@ -106,6 +112,24 @@ public class Mapper {
             lotAllocationDto.setLotId(lotAllocation.getLot().getId());
 
         return lotAllocationDto;
+    }
+
+    public static LotAllocation map(LotAllocationDto lotAllocationDto) {
+        LotAllocation lotAllocation = map(lotAllocationDto, LotAllocation.class);
+
+        if (lotAllocationDto.getInvoiceId() != null && lotAllocationDto.getProductId() != null && lotAllocationDto.getMeasurementId() != null)
+            lotAllocation.setInvoiceLine(InvoiceLine.builder()
+                    .invoice(Invoice.builder().id(lotAllocationDto.getInvoiceId()).build())
+                    .unitOfMeasure(UnitOfMeasure.builder()
+                            .product(Product.builder().id(lotAllocationDto.getProductId()).build())
+                            .measurement(Measurement.builder().id(lotAllocationDto.getMeasurementId()).build())
+                            .build())
+                    .type(lotAllocationDto.getInvoiceLineType())
+                    .build());
+        if (lotAllocationDto.getLotId() != null)
+            lotAllocation.setLot(Lot.builder().id(lotAllocationDto.getLotId()).build());
+
+        return lotAllocation;
     }
 
     public static LotDto map(Lot lot) {
@@ -129,10 +153,8 @@ public class Mapper {
     public static ProductDto map(Product product) {
         ProductDto productDto = map(product, ProductDto.class);
 
-        if (product.getBaseUnitOfMeasure() != null) {
-            productDto.setBaseMeasurementId(product.getBaseUnitOfMeasure().getMeasurement().getId());
-            productDto.setBaseMeasurementName(product.getBaseUnitOfMeasure().getMeasurement().getName());
-        }
+        if (product.getUnitOfMeasures() != null)
+            productDto.setUnitOfMeasures(product.getUnitOfMeasures().stream().map(Mapper::map).toList());
 
         return productDto;
     }
@@ -140,11 +162,8 @@ public class Mapper {
     public static Product map(ProductDto productDto) {
         Product product = map(productDto, Product.class);
 
-        if (productDto.getBaseMeasurementId() != null)
-            product.setBaseUnitOfMeasure(UnitOfMeasure.builder()
-                    .product(Product.builder().id(productDto.getId()).build())
-                    .measurement(Measurement.builder().id(productDto.getBaseMeasurementId()).build())
-                    .build());
+        if (productDto.getUnitOfMeasures() != null)
+            product.setUnitOfMeasures(productDto.getUnitOfMeasures().stream().map(Mapper::map).toList());
 
         return product;
     }
@@ -205,6 +224,28 @@ public class Mapper {
         return promotionCondition;
     }
 
+    public static PromotionDto map(Promotion promotion) {
+        PromotionDto promotionDto = map(promotion, PromotionDto.class);
+
+        if (promotion.getConditions() != null)
+            promotionDto.setConditions(promotion.getConditions().stream().map(Mapper::map).toList());
+        if (promotion.getActions() != null)
+            promotionDto.setActions(promotion.getActions().stream().map(Mapper::map).toList());
+
+        return promotionDto;
+    }
+
+    public static Promotion map(PromotionDto promotionDto) {
+        Promotion promotion = map(promotionDto, Promotion.class);
+
+        if (promotionDto.getConditions() != null)
+            promotion.setConditions(promotionDto.getConditions().stream().map(Mapper::map).toList());
+        if (promotionDto.getActions() != null)
+            promotion.setActions(promotionDto.getActions().stream().map(Mapper::map).toList());
+
+        return promotion;
+    }
+
     public static ShiftDto map(Shift shift) {
         ShiftDto shiftDto = map(shift, ShiftDto.class);
 
@@ -236,10 +277,8 @@ public class Mapper {
 
         if (unitOfMeasure.getProduct() != null)
             unitOfMeasureDto.setProductId(unitOfMeasure.getProduct().getId());
-        if (unitOfMeasure.getMeasurement() != null) {
-            unitOfMeasureDto.setMeasurementId(unitOfMeasure.getMeasurement().getId());
-            unitOfMeasureDto.setMeasurementName(unitOfMeasure.getMeasurement().getName());
-        }
+        if (unitOfMeasure.getMeasurement() != null)
+            unitOfMeasureDto.setMeasurement(Mapper.map(unitOfMeasure.getMeasurement(), MeasurementDto.class));
 
         return unitOfMeasureDto;
     }
@@ -249,8 +288,8 @@ public class Mapper {
 
         if (unitOfMeasureDto.getProductId() != null)
             unitOfMeasure.setProduct(Product.builder().id(unitOfMeasureDto.getProductId()).build());
-        if (unitOfMeasureDto.getMeasurementId() != null)
-            unitOfMeasure.setMeasurement(Measurement.builder().id(unitOfMeasureDto.getMeasurementId()).build());
+        if (unitOfMeasureDto.getMeasurement() != null)
+            unitOfMeasure.setMeasurement(Mapper.map(unitOfMeasureDto.getMeasurement(), Measurement.class));
 
         return unitOfMeasure;
     }

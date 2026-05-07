@@ -26,7 +26,6 @@ public class ProductDto {
     private BigDecimal vat;
     private String strength;
     private String description;
-    private UnitOfMeasureDto baseUnitOfMeasure;
     private List<UnitOfMeasureDto> unitOfMeasures;
     private LocalDateTime creationDate;
 }

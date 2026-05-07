@@ -31,6 +31,7 @@ public class LotAllocation {
     @ManyToOne
     @JoinColumn(name = "lot_id", nullable = false, columnDefinition = "varchar(20)")
     private Lot lot;
+    @Column(nullable = false)
     private int quantity;
 
     @Getter

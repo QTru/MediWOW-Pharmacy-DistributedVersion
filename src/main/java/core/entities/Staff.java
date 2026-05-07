@@ -24,8 +24,10 @@ public class Staff {
     @GeneratedId(prefix = "STA", numberLength = 4, sequenceName = "seq_staff_id")
     @Column(name = "staff_id", length = 20, nullable = false)
     private String id;
+    @Column(nullable = false)
     private String username;
     @JsonIgnore
+    @Column(nullable = false)
     private String password;
     @Column(name = "full_name")
     private String fullName;
@@ -36,6 +38,7 @@ public class Staff {
     private String email;
     @Column(name = "hire_date")
     private LocalDateTime hireDate;
+    @Column(nullable = false)
     private boolean active;
     @Enumerated(EnumType.STRING)
     private Role role;
