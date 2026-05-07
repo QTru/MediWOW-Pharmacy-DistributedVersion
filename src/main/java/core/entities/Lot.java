@@ -23,7 +23,7 @@ import java.util.List;
 public class Lot {
     @Id
     @GeneratedId(prefix = "LOT", numberLength = 6, sequenceName = "seq_lot_id")
-    @Column(name = "lot_id", length = 20)
+    @Column(name = "lot_id", length = 20, nullable = false)
     private String id;
     @Column(name = "batch_number")
     private int batchNumber;

@@ -12,8 +12,7 @@ import java.math.BigDecimal;
 @Builder
 public class UnitOfMeasureDto {
     private String productId;
-    private String measurementId;
-    private String measurementName;
+    private MeasurementDto measurement;
     private BigDecimal price;
     private BigDecimal baseUnitConversionRate;
     private BigDecimal basePriceConversionRate;

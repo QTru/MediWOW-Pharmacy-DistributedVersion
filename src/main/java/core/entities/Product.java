@@ -24,7 +24,7 @@ import java.util.List;
 public class Product {
     @Id
     @GeneratedId(prefix = "PRO", numberLength = 6, sequenceName = "seq_product_id")
-    @Column(name = "product_id", length = 20)
+    @Column(name = "product_id", length = 20, nullable = false)
     private String id;
     private String barcode;
     @Enumerated(EnumType.STRING)
@@ -39,9 +39,9 @@ public class Product {
     private BigDecimal vat;
     private String strength;
     private String description;
-    @OneToOne
+    @OneToOne(cascade = CascadeType.PERSIST)
     @JoinColumns({
-            @JoinColumn(name = "base_uom_product_id",          columnDefinition = "varchar(20)", referencedColumnName = "product_id"),
+            @JoinColumn(name = "base_uom_product_id",     columnDefinition = "varchar(20)", referencedColumnName = "product_id"),
             @JoinColumn(name = "base_uom_measurement_id", columnDefinition = "varchar(20)", referencedColumnName = "measurement_id")
     })
     private UnitOfMeasure baseUnitOfMeasure;

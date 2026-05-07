@@ -4,6 +4,7 @@ import core.entities.enums.InvoiceLineType;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Getter
 @Setter
@@ -19,4 +20,5 @@ public class InvoiceLineDto {
     private InvoiceLineType type;
     private BigDecimal unitPrice;
     private int quantity;
+    private List<LotAllocationDto> lotAllocations;
 }

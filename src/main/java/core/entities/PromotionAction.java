@@ -21,10 +21,10 @@ import java.math.BigDecimal;
 public class PromotionAction {
     @Id
     @GeneratedId(prefix = "PROMA", numberLength = 6, sequenceName = "seq_promotion_action_id")
-    @Column(name = "promotion_action_id", length = 20)
+    @Column(name = "promotion_action_id", length = 20, nullable = false)
     private String id;
     @ManyToOne
-    @JoinColumn(name = "promotion_id")
+    @JoinColumn(name = "promotion_id", nullable = false)
     private Promotion promotion;
     @Column(name = "action_order")
     private int actionOrder;
@@ -35,7 +35,7 @@ public class PromotionAction {
     private BigDecimal value;
     @ManyToOne
     @JoinColumns({
-            @JoinColumn(name = "uom_product_id",          columnDefinition = "varchar(20)", referencedColumnName = "product_id"),
+            @JoinColumn(name = "uom_product_id",     columnDefinition = "varchar(20)", referencedColumnName = "product_id"),
             @JoinColumn(name = "uom_measurement_id", columnDefinition = "varchar(20)", referencedColumnName = "measurement_id")
     })
     private UnitOfMeasure productUom;

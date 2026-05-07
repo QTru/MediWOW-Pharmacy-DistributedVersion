@@ -25,24 +25,23 @@ import java.util.List;
 public class InvoiceLine {
     @Id
     @ManyToOne
-    @JoinColumn(name = "invoice_id", columnDefinition = "varchar(20)")
+    @JoinColumn(name = "invoice_id", nullable = false, columnDefinition = "varchar(20)")
     private Invoice invoice;
     @Id
     @ManyToOne
     @JoinColumns({
-            @JoinColumn(name = "uom_product_id",          columnDefinition = "varchar(20)", referencedColumnName = "product_id"),
-            @JoinColumn(name = "uom_measurement_id", columnDefinition = "varchar(20)", referencedColumnName = "measurement_id")
+            @JoinColumn(name = "uom_product_id", nullable = false,     columnDefinition = "varchar(20)", referencedColumnName = "product_id"),
+            @JoinColumn(name = "uom_measurement_id", nullable = false, columnDefinition = "varchar(20)", referencedColumnName = "measurement_id")
     })
     private UnitOfMeasure unitOfMeasure;
     @Id
     @Enumerated(EnumType.STRING)
-    @Column(columnDefinition = "varchar(20)")
+    @Column(columnDefinition = "varchar(20)", nullable = false)
     private InvoiceLineType type;
     @Column(name = "unit_price")
     private BigDecimal unitPrice;
     private int quantity;
-    @OneToMany(mappedBy = "invoiceLine")
-    @JsonIgnore
+    @OneToMany(mappedBy = "invoiceLine", cascade = CascadeType.PERSIST)
     private List<LotAllocation> lotAllocations;
 
     @Getter

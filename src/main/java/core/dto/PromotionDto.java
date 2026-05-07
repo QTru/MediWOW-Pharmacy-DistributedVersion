@@ -3,6 +3,7 @@ package core.dto;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Setter
@@ -18,4 +19,6 @@ public class PromotionDto {
     private LocalDateTime effectiveDate;
     private LocalDateTime endDate;
     private boolean active;
+    private List<PromotionConditionDto> conditions;
+    private List<PromotionActionDto> actions;
 }

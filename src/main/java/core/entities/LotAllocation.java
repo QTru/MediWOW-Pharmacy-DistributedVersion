@@ -21,15 +21,15 @@ public class LotAllocation {
     @Id
     @ManyToOne
     @JoinColumns({
-            @JoinColumn(name = "invoice_id",              columnDefinition = "varchar(20)", referencedColumnName = "invoice_id"),
-            @JoinColumn(name = "uom_product_id",          columnDefinition = "varchar(20)", referencedColumnName = "uom_product_id"),
-            @JoinColumn(name = "uom_measurement_id",      columnDefinition = "varchar(20)", referencedColumnName = "uom_measurement_id"),
-            @JoinColumn(name = "invoice_line_type",       columnDefinition = "varchar(20)", referencedColumnName = "type")
+            @JoinColumn(name = "invoice_id", nullable = false,              columnDefinition = "varchar(20)", referencedColumnName = "invoice_id"),
+            @JoinColumn(name = "uom_product_id", nullable = false,          columnDefinition = "varchar(20)", referencedColumnName = "uom_product_id"),
+            @JoinColumn(name = "uom_measurement_id", nullable = false,      columnDefinition = "varchar(20)", referencedColumnName = "uom_measurement_id"),
+            @JoinColumn(name = "invoice_line_type", nullable = false,       columnDefinition = "varchar(20)", referencedColumnName = "type")
     })
     private InvoiceLine invoiceLine;
     @Id
     @ManyToOne
-    @JoinColumn(name = "lot_id", columnDefinition = "varchar(20)")
+    @JoinColumn(name = "lot_id", nullable = false, columnDefinition = "varchar(20)")
     private Lot lot;
     private int quantity;
 
