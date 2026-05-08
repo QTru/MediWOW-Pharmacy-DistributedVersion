@@ -11,12 +11,12 @@ public class MeasurementRepositoryImplementation extends AbstractGenericReposito
     }
 
     @Override
-    public Object findByName(String name) {
+    public Measurement findByName(String name) {
         String query = "FROM Measurement m WHERE m.name = :name";
 
         return doInTransaction(em -> {
             try {
-                return em.createQuery(query)
+                return em.createQuery(query, Measurement.class)
                         .setParameter("name", name)
                         .getSingleResult();
             } catch (Exception e) {

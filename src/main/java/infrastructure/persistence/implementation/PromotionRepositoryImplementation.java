@@ -7,6 +7,7 @@ import infrastructure.persistence.PromotionRepository;
 import jakarta.persistence.EntityManager;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 public class PromotionRepositoryImplementation extends AbstractGenericRepositoryImplementation<Promotion, String> implements PromotionRepository {
@@ -17,24 +18,18 @@ public class PromotionRepositoryImplementation extends AbstractGenericRepository
     @Override
     public Promotion create(Promotion promotion) {
         return doInTransaction(em -> {
-            if (promotion.getConditions() == null || promotion.getConditions().isEmpty())
-                throw new IllegalArgumentException("Promotion must have at least one condition");
-            if (promotion.getActions() == null || promotion.getActions().isEmpty())
-                throw new IllegalArgumentException("Promotion must have at least one action");
+            promotion.setCreationDate(LocalDateTime.now());
+            promotion.setActive(true);
 
-            promotion.setConditions(promotion.getConditions().stream().map(condition -> {
+            promotion.getConditions().forEach(condition -> {
                 condition.setPromotion(promotion);
-                if (condition.getProductUom() != null)
-                    condition.setProductUom(resolveUom(em, condition.getProductUom()));
-                return condition;
-            }).toList());
+                resolveConditionUom(em, condition);
+            });
 
-            promotion.setActions(promotion.getActions().stream().map(action -> {
+            promotion.getActions().forEach(action -> {
                 action.setPromotion(promotion);
-                if (action.getProductUom() != null)
-                    action.setProductUom(resolveUom(em, action.getProductUom()));
-                return action;
-            }).toList());
+                resolveActionUom(em, action);
+            });
 
             em.persist(promotion);
             return promotion;
@@ -48,92 +43,97 @@ public class PromotionRepositoryImplementation extends AbstractGenericRepository
             if (existing == null)
                 throw new IllegalArgumentException("Promotion not found: " + promotion.getId());
 
-            // Update basic fields
             existing.setName(promotion.getName());
             existing.setDescription(promotion.getDescription());
             existing.setEffectiveDate(promotion.getEffectiveDate());
             existing.setEndDate(promotion.getEndDate());
             existing.setActive(promotion.isActive());
 
-            // Update conditions — orphanRemoval tự xóa conditions bị remove
             if (promotion.getConditions() != null) {
-                List<PromotionCondition> updatedConditions = promotion.getConditions().stream().map(condition -> {
+                // Safe to clear + re-add — conditions have surrogate IDs,
+                // so no composite key identity conflict like UoM
+                existing.getConditions().clear();
+                promotion.getConditions().forEach(condition -> {
+                    condition.setId(null); // force new ID generation
                     condition.setPromotion(existing);
-                    if (condition.getProductUom() != null)
-                        condition.setProductUom(resolveUom(em, condition.getProductUom()));
-                    return condition;
-                }).toList();
-                existing.getConditions().clear();            // trigger orphanRemoval
-                existing.getConditions().addAll(updatedConditions);
+                    resolveConditionUom(em, condition);
+                    existing.getConditions().add(condition);
+                });
             }
 
-            // Update actions — same pattern
             if (promotion.getActions() != null) {
-                List<PromotionAction> updatedActions = promotion.getActions().stream().map(action -> {
+                existing.getActions().clear();
+                promotion.getActions().forEach(action -> {
+                    action.setId(null);
                     action.setPromotion(existing);
-                    if (action.getProductUom() != null)
-                        action.setProductUom(resolveUom(em, action.getProductUom()));
-                    return action;
-                }).toList();
-                existing.getActions().clear();               // trigger orphanRemoval
-                existing.getActions().addAll(updatedActions);
+                    resolveActionUom(em, action);
+                    existing.getActions().add(action);
+                });
             }
 
-            return existing; // đã managed, JPA tự flush
+            return existing;
         });
     }
 
-    // ─── HELPER ───────────────────────────────────────────────────────────────────
-    private UnitOfMeasure resolveUom(EntityManager em, UnitOfMeasure uom) {
-        if (uom.getProduct() == null || uom.getProduct().getId() == null)
-            throw new IllegalArgumentException("Product UOM must have a product");
-        if (uom.getMeasurement() == null || uom.getMeasurement().getId() == null)
-            throw new IllegalArgumentException("Product UOM must have a measurement");
+    // ─── HELPERS ──────────────────────────────────────────────────────────────────
 
-        UnitOfMeasure.UnitOfMeasureId uomId = UnitOfMeasure.UnitOfMeasureId.builder()
-                .product(uom.getProduct().getId())
-                .measurement(uom.getMeasurement().getId())
-                .build();
+    private void resolveConditionUom(EntityManager em, PromotionCondition condition) {
+        if (condition.getProductUom() == null) return;
+        condition.setProductUom(findUom(em,
+            condition.getProductUom().getProduct().getId(),
+            condition.getProductUom().getMeasurement().getId()));
+    }
 
-        UnitOfMeasure existing = em.find(UnitOfMeasure.class, uomId);
-        if (existing == null)
-            throw new IllegalArgumentException("UnitOfMeasure not found — product: "
-                    + uom.getProduct().getId() + ", measurement: " + uom.getMeasurement().getId());
+    private void resolveActionUom(EntityManager em, PromotionAction action) {
+        if (action.getProductUom() == null) return;
+        action.setProductUom(findUom(em,
+            action.getProductUom().getProduct().getId(),
+            action.getProductUom().getMeasurement().getId()));
+    }
 
-        return existing; // em.find() trả về managed entity trực tiếp
+    private UnitOfMeasure findUom(EntityManager em, String productId, String measurementId) {
+        UnitOfMeasure uom = em.find(UnitOfMeasure.class,
+            UnitOfMeasure.UnitOfMeasureId.builder()
+                .product(productId)
+                .measurement(measurementId)
+                .build());
+        if (uom == null)
+            throw new IllegalArgumentException(
+                "UnitOfMeasure not found for product=" + productId + ", measurement=" + measurementId);
+        return uom;
     }
 
     public static void main(String[] args) {
         PromotionRepository promotionRepository = new PromotionRepositoryImplementation();
         Promotion promotion = Promotion
-                .builder()
-                .id("PROM000007")
-                .name("Buy 3 get 2 free")
-                .conditions(List.of(
-                        PromotionCondition
-                                .builder()
-                                .type(ConditionType.PRODUCT_ID)
-                                .productUom(UnitOfMeasure
-                                        .builder()
-                                        .product(Product.builder().id("PRO000002").build())
-                                        .measurement(Measurement.builder().id("MEA0001").build())
-                                        .build())
-                                .value(BigDecimal.valueOf(3))
-                                .build()
-                ))
-                .actions(List.of(
-                        PromotionAction
-                                .builder()
-                                .type(ActionType.PRODUCT_GIFT)
-                                .productUom(UnitOfMeasure
-                                        .builder()
-                                        .product(Product.builder().id("PRO000001").build())
-                                        .measurement(Measurement.builder().id("MEA0001").build())
-                                        .build())
-                                .value(BigDecimal.valueOf(2))
-                                .build()
-                ))
-                .build();
+            .builder()
+            .id("PROM000007")
+            .name("Buy 3 get 2 free")
+            .conditions(List.of(
+                PromotionCondition
+                    .builder()
+                    .type(ConditionType.PRODUCT_ID)
+                    .productUom(UnitOfMeasure
+                        .builder()
+                        .product(Product.builder().id("PRO000002").build())
+                        .measurement(Measurement.builder().id("MEA0001").build())
+                        .build())
+                    .value(BigDecimal.valueOf(3))
+                    .build()
+            ))
+            .actions(List.of(
+                PromotionAction
+                    .builder()
+                    .type(ActionType.PRODUCT_GIFT)
+                    .productUom(UnitOfMeasure
+                        .builder()
+                        .product(Product.builder().id("PRO000001").build())
+                        .measurement(Measurement.builder().id("MEA0001").build())
+                        .build())
+                    .value(BigDecimal.valueOf(2))
+                    .build()
+            ))
+            .build();
 
         System.out.println(promotionRepository.update(promotion));
     }

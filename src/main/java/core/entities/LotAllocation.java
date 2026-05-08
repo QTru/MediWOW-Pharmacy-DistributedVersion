@@ -1,5 +1,6 @@
 package core.entities;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import core.utils.idgenerator.implementation.GeneratedId;
 import jakarta.persistence.*;
 import lombok.*;
@@ -26,6 +27,7 @@ public class LotAllocation {
             @JoinColumn(name = "uom_measurement_id", nullable = false,      columnDefinition = "varchar(20)", referencedColumnName = "uom_measurement_id"),
             @JoinColumn(name = "invoice_line_type", nullable = false,       columnDefinition = "varchar(20)", referencedColumnName = "type")
     })
+    @JsonBackReference("invoiceLine-lotAllocations")
     private InvoiceLine invoiceLine;
     @Id
     @ManyToOne

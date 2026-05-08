@@ -22,20 +22,6 @@ public class ProductRepositoryImplementation extends AbstractGenericRepositoryIm
     @Override
     public Product create(Product product) {
         return doInTransaction(em -> {
-            // Validate at least one UoM
-            if (product.getUnitOfMeasures() == null || product.getUnitOfMeasures().isEmpty())
-                throw new IllegalArgumentException("Product must have at least one unit of measure");
-
-            // Validate exactly one base UoM
-            long baseCount = product.getUnitOfMeasures().stream()
-                    .filter(UnitOfMeasure::isBaseUnit)
-                    .count();
-            if (baseCount == 0)
-                throw new IllegalArgumentException("Product must have exactly one base unit of measure");
-            if (baseCount > 1)
-                throw new IllegalArgumentException("Product can only have one base unit of measure");
-
-            // Set product reference and resolve measurements for all UoMs
             product.getUnitOfMeasures().forEach(uom -> {
                 uom.setProduct(product);
                 resolveMeasurement(em, uom);
@@ -79,20 +65,42 @@ public class ProductRepositoryImplementation extends AbstractGenericRepositoryIm
                 if (!basePreserved)
                     throw new IllegalArgumentException("Cannot remove or change the base unit of measure");
 
-                // Resolve measurements for non-base UoMs only
-                List<UnitOfMeasure> newNonBaseUoms = product.getUnitOfMeasures().stream()
+                List<UnitOfMeasure> incomingNonBaseUoms = product.getUnitOfMeasures().stream()
                         .filter(uom -> !uom.isBaseUnit())
                         .toList();
 
-                newNonBaseUoms.forEach(uom -> {
-                    uom.setProduct(existing);
-                    resolveMeasurement(em, uom);
-                });
+                // Resolve measurements first so we can match by name
+                incomingNonBaseUoms.forEach(uom -> resolveMeasurement(em, uom));
 
-                // orphanRemoval handles deletion of removed UoMs
-                existing.getUnitOfMeasures().clear();
-                existing.getUnitOfMeasures().add(existingBaseUom);     // preserve base
-                existing.getUnitOfMeasures().addAll(newNonBaseUoms);   // add updated non-base
+                // Snapshot of existing non-base UoMs — track which ones were "handled"
+                List<UnitOfMeasure> existingNonBaseUoms = new ArrayList<>(
+                        existing.getUnitOfMeasures().stream()
+                                .filter(uom -> !uom.isBaseUnit())
+                                .toList());
+
+                for (UnitOfMeasure incoming : incomingNonBaseUoms) {
+                    String incomingMeasurementName = incoming.getMeasurement().getName();
+
+                    UnitOfMeasure match = existingNonBaseUoms.stream()
+                            .filter(e -> e.getMeasurement().getName().equals(incomingMeasurementName))
+                            .findFirst()
+                            .orElse(null);
+
+                    if (match != null) {
+                        // ✅ Same measurement already exists — update fields IN-PLACE,
+                        //    no identity conflict because we never removed it
+                        match.setPrice(incoming.getPrice());
+                        match.setBaseUnitConversionRate(incoming.getBaseUnitConversionRate());
+                        existingNonBaseUoms.remove(match); // mark as handled
+                    } else {
+                        // Truly new measurement — safe to add
+                        incoming.setProduct(existing);
+                        existing.getUnitOfMeasures().add(incoming);
+                    }
+                }
+
+                // Whatever remains in existingNonBaseUoms was not in the incoming list → remove
+                existing.getUnitOfMeasures().removeAll(existingNonBaseUoms);
             }
 
             return existing;
@@ -103,7 +111,7 @@ public class ProductRepositoryImplementation extends AbstractGenericRepositoryIm
     private void resolveMeasurement(EntityManager em, UnitOfMeasure uom) {
         if (uom.getMeasurement() == null)
             throw new IllegalArgumentException("UnitOfMeasure must have a measurement");
-        Measurement existing = (Measurement) measurementRepository
+        Measurement existing = measurementRepository
                 .findByName(uom.getMeasurement().getName());
         if (existing != null)
             uom.setMeasurement(em.merge(existing));
@@ -135,14 +143,14 @@ public class ProductRepositoryImplementation extends AbstractGenericRepositoryIm
         Product product = productRepository.findById("PRO000007");
         product.setUnitOfMeasures(List.of(
                 UnitOfMeasure.builder()
-                        .measurement(Measurement.builder().name("Hop").build())
-                        .baseUnit(false)
-                        .baseUnitConversionRate(BigDecimal.valueOf(10))
-                        .build()
-                ,UnitOfMeasure.builder()
-                        .measurement(Measurement.builder().name("Ong").build())
+                        .measurement(Measurement.builder().name("piece").build())
                         .baseUnit(true)
                         .baseUnitConversionRate(BigDecimal.ONE)
+                        .build()
+                ,UnitOfMeasure.builder()
+                        .measurement(Measurement.builder().name("box").build())
+                        .baseUnit(false)
+                        .baseUnitConversionRate(BigDecimal.valueOf(20))
                         .build()
         ));
 

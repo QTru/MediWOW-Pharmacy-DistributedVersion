@@ -32,11 +32,12 @@ public class Promotion {
     private LocalDateTime effectiveDate;
     @Column(name = "end_date", nullable = false)
     private LocalDateTime endDate;
+    @Column(nullable = false)
     private boolean active;
-    @OneToMany(mappedBy = "promotion", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
+    @OneToMany(mappedBy = "promotion", fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
     @JsonIgnore
     private List<PromotionCondition> conditions;
-    @OneToMany(mappedBy = "promotion", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
+    @OneToMany(mappedBy = "promotion", fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
     @JsonIgnore
     private List<PromotionAction> actions;
 }

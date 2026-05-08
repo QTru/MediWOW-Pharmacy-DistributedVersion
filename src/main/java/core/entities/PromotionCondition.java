@@ -31,9 +31,12 @@ public class PromotionCondition {
     @Column(nullable = false)
     private ConditionType type;
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private Comparator comparator;
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private Target target;
+    @Column(nullable = false)
     private BigDecimal value;
     @ManyToOne
     @JoinColumns({

@@ -27,7 +27,7 @@ public class UnitOfMeasure {
     @JoinColumn(name = "measurement_id", nullable = false, columnDefinition = "varchar(20)")
     private Measurement measurement;
     @Column(name = "base_unit", nullable = false)
-    private boolean baseUnit;
+    private boolean baseUnit = false;
     private BigDecimal price;
     @Column(name = "base_unit_conversion_rate", nullable = false)
     private BigDecimal baseUnitConversionRate;
@@ -42,6 +42,7 @@ public class UnitOfMeasure {
         this.measurement = measurement;
         this.baseUnit = baseUnit;
         this.price = price;
+        this.baseUnitConversionRate = baseUnit ? BigDecimal.ONE : baseUnitConversionRate;
         setBaseUnitConversionRate(baseUnitConversionRate);
     }
 
@@ -71,9 +72,10 @@ public class UnitOfMeasure {
     }
 
     public void setBaseUnitConversionRate(BigDecimal baseUnitConversionRate) {
-        if (!isBaseUnit())
-            throw new IllegalStateException("Base unit must have a conversion rate of 1.0");
-        this.baseUnitConversionRate = baseUnitConversionRate;
+        if (isBaseUnit())
+            this.baseUnitConversionRate = BigDecimal.ONE;
+        else
+            this.baseUnitConversionRate = baseUnitConversionRate;
         computeDerivedFields();
     }
 

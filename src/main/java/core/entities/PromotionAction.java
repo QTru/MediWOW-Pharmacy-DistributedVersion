@@ -29,9 +29,12 @@ public class PromotionAction {
     @Column(name = "action_order", nullable = false)
     private int actionOrder;
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private ActionType type;
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private Target target;
+    @Column(nullable = false)
     private BigDecimal value;
     @ManyToOne
     @JoinColumns({

@@ -38,8 +38,6 @@ public class Mapper {
         }
         if (invoice.getReferencedInvoice() != null)
             invoiceDto.setReferencedInvoiceId(invoice.getReferencedInvoice().getId());
-        if (invoice.getParentInvoice() != null)
-            invoiceDto.setParentInvoiceId(invoice.getParentInvoice().getId());
 
         return invoiceDto;
     }
@@ -59,8 +57,6 @@ public class Mapper {
             invoice.setPromotion(Promotion.builder().id(invoiceDto.getPromotionId()).build());
         if (invoiceDto.getReferencedInvoiceId() != null)
             invoice.setReferencedInvoice(Invoice.builder().id(invoiceDto.getReferencedInvoiceId()).build());
-        if (invoiceDto.getParentInvoiceId() != null)
-            invoice.setParentInvoice(Invoice.builder().id(invoiceDto.getParentInvoiceId()).build());
 
         return invoice;
     }

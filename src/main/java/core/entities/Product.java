@@ -29,19 +29,24 @@ public class Product {
     @Column(nullable = false, unique = true)
     private String barcode;
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private ProductCategory category;
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private DosageForm form;
     @Column(nullable = false)
     private String name;
-    @Column(name = "short_name")
+    @Column(name = "short_name", nullable = false)
     private String shortName;
+    @Column(nullable = false)
     private String manufacturer;
+    @Column(nullable = false)
     private String ingredients;
+    @Column(nullable = false)
     private BigDecimal vat;
     private String strength;
     private String description;
-    @OneToMany(mappedBy = "product", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
+    @OneToMany(mappedBy = "product", fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
     @JsonIgnore
     private List<UnitOfMeasure> unitOfMeasures;
     @OneToMany(mappedBy = "product")

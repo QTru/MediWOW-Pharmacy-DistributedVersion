@@ -28,5 +28,4 @@ public class InvoiceDto {
     private String promotionName;
     private PaymentMethod paymentMethod;
     private String referencedInvoiceId;
-    private String parentInvoiceId;
 }

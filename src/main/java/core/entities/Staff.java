@@ -29,18 +29,20 @@ public class Staff {
     @JsonIgnore
     @Column(nullable = false)
     private String password;
-    @Column(name = "full_name")
+    @Column(name = "full_name", nullable = false)
     private String fullName;
-    @Column(name = "license_number")
+    @Column(name = "license_number", nullable = false)
     private String licenseNumber;
     @Column(name = "phone_number", unique = true, nullable = false)
     private String phoneNumber;
+    @Column(nullable = false)
     private String email;
     @Column(name = "hire_date")
     private LocalDateTime hireDate;
     @Column(nullable = false)
     private boolean active;
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private Role role;
     @OneToMany(mappedBy = "staff")
     @JsonIgnore

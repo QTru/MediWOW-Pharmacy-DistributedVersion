@@ -7,4 +7,10 @@ public class StaffRepositoryImplementation extends AbstractGenericRepositoryImpl
     public StaffRepositoryImplementation() {
         super(Staff.class);
     }
+
+    @Override
+    public Staff create(Staff staff) {
+        staff.setPassword("firstPassword");
+        return super.create(staff);
+    }
 }
