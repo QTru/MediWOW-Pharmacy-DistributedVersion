@@ -28,13 +28,13 @@ public class Shift {
     private Staff staff;
     @Column(name = "start_time", nullable = false)
     private LocalDateTime startTime;
-    @Column(name = "end_time", nullable = false)
+    @Column(name = "end_time")
     private LocalDateTime endTime;
     @Column(name = "start_money", nullable = false)
     private BigDecimal startMoney;
-    @Column(name = "end_money", nullable = false)
+    @Column(name = "end_money")
     private BigDecimal endMoney;
-    @Column(name = "system_money", nullable = false)
+    @Column(name = "system_money")
     private BigDecimal systemMoney;
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -43,8 +43,8 @@ public class Shift {
     @Column(name = "work_station", nullable = false)
     private String workStation;
     @ManyToOne
-    @JoinColumn(name = "closed_by_staff_id", nullable = false)
+    @JoinColumn(name = "closed_by_staff_id")
     private Staff closedByStaff;
-    @Column(name = "closing_reason", nullable = false)
+    @Column(name = "closing_reason")
     private String closingReason;
 }

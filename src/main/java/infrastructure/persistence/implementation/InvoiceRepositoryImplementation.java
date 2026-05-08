@@ -21,49 +21,28 @@ public class InvoiceRepositoryImplementation extends AbstractGenericRepositoryIm
     @Override
     public Invoice create(Invoice invoice) {
         return doInTransaction(em -> {
-            if (invoice.getCreator() == null)
-                throw new IllegalArgumentException("Invoice must have a creator");
-            invoice.setCreator(em.getReference(Staff.class, invoice.getCreator().getId()));
-
-            if (invoice.getShift() == null)
-                throw new IllegalArgumentException("Invoice must have a shift");
-            invoice.setShift(em.getReference(Shift.class, invoice.getShift().getId()));
+            invoice.setCreator(em.find(Staff.class, invoice.getCreator().getId()));
+            invoice.setShift(em.find(Shift.class, invoice.getShift().getId()));
 
             if (invoice.getCustomer() != null) {
-                Customer customer = (Customer) customerRepository.findByPhoneNumber(invoice.getCustomer().getPhoneNumber());
+                Customer customer = customerRepository.findByPhoneNumber(invoice.getCustomer().getPhoneNumber());
                 if (customer != null)
-                    invoice.setCustomer(em.merge(customer)); // Assure managed state to prevent duplicate entry
+                    invoice.setCustomer(em.merge(customer));
+                else
+                    invoice.getCustomer().setCreationDate(LocalDateTime.now());
             }
 
-            if (invoice.getInvoiceLines() == null || invoice.getInvoiceLines().isEmpty())
-                throw new IllegalArgumentException("Invoice must have at least one invoice line");
             invoice.setInvoiceLines(invoice.getInvoiceLines().stream().map(invoiceLine -> {
                 invoiceLine.setInvoice(invoice);
+                invoiceLine.setUnitOfMeasure(em.find(UnitOfMeasure.class,  // ← Change to find
+                        UnitOfMeasure.UnitOfMeasureId.builder()
+                                .product(invoiceLine.getUnitOfMeasure().getProduct().getId())
+                                .measurement(invoiceLine.getUnitOfMeasure().getMeasurement().getId())
+                                .build()));
 
-                if (invoiceLine.getUnitOfMeasure() == null)
-                    throw new IllegalArgumentException("Invoice line must have a unit of measure");
-                if (invoiceLine.getUnitOfMeasure().getProduct() == null)
-                    throw new IllegalArgumentException("Invoice line's unit of measure must have a product");
-                if (invoiceLine.getUnitOfMeasure().getMeasurement() == null)
-                    throw new IllegalArgumentException("Invoice line's unit of measure must have a measurement");
-                invoiceLine.setUnitOfMeasure(em.getReference(UnitOfMeasure.class, UnitOfMeasure.UnitOfMeasureId
-                        .builder()
-                        .product(invoiceLine.getUnitOfMeasure().getProduct().getId())
-                        .measurement(invoiceLine.getUnitOfMeasure().getMeasurement().getId())
-                        .build()
-                ));
-
-                if (invoiceLine.getType() == null)
-                    throw new IllegalArgumentException("Invoice line must have a type");
-
-                if (invoiceLine.getLotAllocations() == null || invoiceLine.getLotAllocations().isEmpty())
-                    throw new IllegalArgumentException("Invoice line must have at least one lot allocation");
                 invoiceLine.setLotAllocations(invoiceLine.getLotAllocations().stream().map(lotAllocation -> {
                     lotAllocation.setInvoiceLine(invoiceLine);
-                    if (lotAllocation.getLot() == null)
-                        throw new IllegalArgumentException("Lot allocation must have a lot");
-                    lotAllocation.setLot(em.getReference(Lot.class, lotAllocation.getLot().getId()));
-
+                    lotAllocation.setLot(em.find(Lot.class, lotAllocation.getLot().getId()));  // ← Also change to find
                     return lotAllocation;
                 }).toList());
 
@@ -71,13 +50,9 @@ public class InvoiceRepositoryImplementation extends AbstractGenericRepositoryIm
             }).toList());
 
             if (invoice.getPromotion() != null)
-                invoice.setPromotion(em.getReference(Promotion.class, invoice.getPromotion().getId()));
-
-            if (invoice.getParentInvoice() != null)
-                invoice.setParentInvoice(em.getReference(Invoice.class, invoice.getParentInvoice().getId()));
-
+                invoice.setPromotion(em.find(Promotion.class, invoice.getPromotion().getId()));
             if (invoice.getReferencedInvoice() != null)
-                invoice.setReferencedInvoice(em.getReference(Invoice.class, invoice.getReferencedInvoice().getId()));
+                invoice.setReferencedInvoice(em.find(Invoice.class, invoice.getReferencedInvoice().getId()));
 
             em.persist(invoice);
             return invoice;
@@ -85,37 +60,39 @@ public class InvoiceRepositoryImplementation extends AbstractGenericRepositoryIm
     }
 
     public static void main(String[] args) {
-            InvoiceRepository invoiceRepository = new InvoiceRepositoryImplementation();
+        InvoiceRepository invoiceRepository = new InvoiceRepositoryImplementation();
 
-            Invoice invoice = Invoice
+        Invoice invoice = Invoice
+            .builder()
+            .type(InvoiceType.RETURN)
+            .creationDate(LocalDateTime.now())
+            .creator(Staff.builder().id("STA0001").build())
+            .shift(Shift.builder().id("SHI000001").build())
+            .invoiceLines(List.of(
+                InvoiceLine
                     .builder()
-                    .type(InvoiceType.SALE)
-                    .creationDate(LocalDateTime.now())
-                    .creator(Staff.builder().id("STA0001").build())
-                    .shift(Shift.builder().id("SHI000001").build())
-                    .customer(Customer.builder().phoneNumber("1234567890").build())
-                    .invoiceLines(List.of(
-                            InvoiceLine
-                                    .builder()
-                                    .type(InvoiceLineType.SALE)
-                                    .unitPrice(BigDecimal.valueOf(900))
-                                    .quantity(2)
-                                    .unitOfMeasure(UnitOfMeasure.builder()
-                                            .product(Product.builder().id("PRO000001").build())
-                                            .measurement(Measurement.builder().id("MEA0001").build())
-                                            .build())
-                                    .lotAllocations(List.of(
-                                            LotAllocation
-                                                    .builder()
-                                                    .lot(Lot.builder().id("LOT000001").build())
-                                                    .quantity(2)
-                                                    .build()
-                                    ))
-                                    .build()
+                    .type(InvoiceLineType.SALE)
+                    .unitPrice(BigDecimal.valueOf(900))
+                    .quantity(2)
+                    .unitOfMeasure(UnitOfMeasure.builder()
+                        .product(Product.builder().id("PRO000001").build())
+                        .measurement(Measurement.builder().id("MEA0001").build())
+                        .baseUnit(true)
+                        .baseUnitConversionRate(BigDecimal.ONE)
+                        .build())
+                    .lotAllocations(List.of(
+                        LotAllocation
+                            .builder()
+                            .lot(Lot.builder().id("LOT000001").build())
+                            .quantity(2)
+                            .build()
                     ))
-                    .paymentMethod(PaymentMethod.CASH_PAYMENT)
-                    .build();
+                    .build()
+            ))
+            .paymentMethod(PaymentMethod.CASH_PAYMENT)
+            .referencedInvoice(Invoice.builder().id("INV000002").build())
+            .build();
 
-            invoiceRepository.create(invoice);
+        invoiceRepository.create(invoice);
     }
 }

@@ -2,7 +2,10 @@ package infrastructure.persistence.implementation;
 
 import core.entities.Shift;
 import core.entities.Staff;
+import core.entities.enums.ShiftStatus;
 import infrastructure.persistence.ShiftRepository;
+
+import java.time.LocalDateTime;
 
 public class ShiftRepositoryImplementation extends AbstractGenericRepositoryImplementation<Shift, String> implements ShiftRepository {
     public ShiftRepositoryImplementation() {
@@ -12,12 +15,9 @@ public class ShiftRepositoryImplementation extends AbstractGenericRepositoryImpl
     @Override
     public Shift create(Shift shift) {
         return doInTransaction(em -> {
-            if (shift.getStaff() == null)
-                throw new IllegalArgumentException("Shift must have a creator");
-            shift.setStaff(em.getReference(Staff.class, shift.getStaff().getId()));
-
-            if (shift.getClosedByStaff() != null)
-                shift.setClosedByStaff(em.getReference(Staff.class, shift.getClosedByStaff().getId()));
+            shift.setStaff(em.find(Staff.class, shift.getStaff().getId()));
+            shift.setStartTime(LocalDateTime.now());
+            shift.setStatus(ShiftStatus.OPEN);
 
             em.persist(shift);
             return shift;
@@ -27,11 +27,9 @@ public class ShiftRepositoryImplementation extends AbstractGenericRepositoryImpl
     @Override
     public Shift update(Shift shift) {
         return doInTransaction(em -> {
-            if (shift.getStaff() != null)
-                shift.setStaff(em.getReference(Staff.class, shift.getStaff().getId()));
-
-            if (shift.getClosedByStaff() != null)
-                shift.setClosedByStaff(em.getReference(Staff.class, shift.getClosedByStaff().getId()));
+            shift.setClosedByStaff(em.find(Staff.class, shift.getClosedByStaff().getId()));
+            shift.setEndTime(LocalDateTime.now());
+            shift.setStatus(ShiftStatus.CLOSED);
 
             em.merge(shift);
             return shift;

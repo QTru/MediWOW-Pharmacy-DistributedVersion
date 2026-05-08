@@ -1,6 +1,7 @@
 package core.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import core.entities.enums.InvoiceType;
 import core.entities.enums.PaymentMethod;
 import core.utils.idgenerator.implementation.GeneratedId;
@@ -39,22 +40,20 @@ public class Invoice {
     private Shift shift;
     @Column(name = "prescription_code")
     private String prescriptionCode;
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "customer_id")
     private Customer customer;
     @OneToMany(mappedBy = "invoice", cascade = CascadeType.PERSIST)
     @JsonIgnore
+    @JsonManagedReference("invoice-invoiceLines")
     private List<InvoiceLine> invoiceLines;
     @ManyToOne
     @JoinColumn(name = "promotion_id")
     private Promotion promotion;
     @Enumerated(EnumType.STRING)
-    @Column(name = "payment_method")
+    @Column(name = "payment_method", nullable = false)
     private PaymentMethod paymentMethod;
     @OneToOne
     @JoinColumn(name = "referenced_invoice_id")
     private Invoice referencedInvoice;
-    @OneToOne
-    @JoinColumn(name = "parent_invoice_id")
-    private Invoice parentInvoice;
 }

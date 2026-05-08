@@ -1,6 +1,8 @@
 package core.entities;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import core.entities.enums.InvoiceLineType;
 import core.utils.idgenerator.implementation.GeneratedId;
 import jakarta.persistence.*;
@@ -26,6 +28,7 @@ public class InvoiceLine {
     @Id
     @ManyToOne
     @JoinColumn(name = "invoice_id", nullable = false, columnDefinition = "varchar(20)")
+    @JsonBackReference("invoice-invoiceLines")
     private Invoice invoice;
     @Id
     @ManyToOne
@@ -43,6 +46,7 @@ public class InvoiceLine {
     @Column(nullable = false)
     private int quantity;
     @OneToMany(mappedBy = "invoiceLine", cascade = CascadeType.PERSIST)
+    @JsonManagedReference("invoiceLine-lotAllocations")
     private List<LotAllocation> lotAllocations;
 
     @Getter

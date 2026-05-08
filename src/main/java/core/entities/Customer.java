@@ -25,6 +25,6 @@ public class Customer {
     @Column(name = "phone_number", unique = true, nullable = false)
     private String phoneNumber;
     private String address;
-    @Column(name = "creation_date")
+    @Column(name = "creation_date", nullable = false)
     private LocalDateTime creationDate;
 }

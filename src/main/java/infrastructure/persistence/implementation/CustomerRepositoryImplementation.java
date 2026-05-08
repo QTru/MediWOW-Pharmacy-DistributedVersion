@@ -11,7 +11,7 @@ public class CustomerRepositoryImplementation extends AbstractGenericRepositoryI
     }
 
     @Override
-    public Object findByPhoneNumber(String phoneNumber) {
+    public Customer findByPhoneNumber(String phoneNumber) {
         String query = "FROM Customer c WHERE c.phoneNumber = :phoneNumber";
 
         return doInTransaction(em -> {
