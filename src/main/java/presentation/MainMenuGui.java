@@ -27,36 +27,38 @@ import java.util.function.Consumer;
 public class MainMenuGui extends JFrame implements ActionListener {
 
     // ═══════════════════════════════════════════════════════════════════════════
-    // Constants — Colors & Fonts
+    // Constants — Colors
     // ═══════════════════════════════════════════════════════════════════════════
-    private static final Color CLR_SIDEBAR_BG   = new Color(0x0F, 0x37, 0x1B); // xanh lá đậm
-    private static final Color CLR_SIDEBAR_FG   = new Color(0xFF, 0xFA, 0xEA); // kem
-    private static final Color CLR_HEADER_BG    = new Color(0xDD, 0xEF, 0xDD); // xanh lá nhạt
-    private static final Color CLR_CONTENT_BG   = new Color(0xF5, 0xF9, 0xF5);
-    private static final Color CLR_CARD_BG      = Color.WHITE;
-    private static final Color CLR_ACCENT       = new Color(0x0F, 0x37, 0x1B);
-    private static final Color CLR_MUTED        = new Color(0x55, 0x77, 0x55);
-    private static final Color CLR_SUCCESS      = new Color(0x22, 0xC5, 0x5E);
-    private static final Color CLR_BTN_LOGOUT   = new Color(0xCC, 0x22, 0x22);
-    private static final Color CLR_BTN_HOVER    = new Color(0xAA, 0x11, 0x11);
-    private static final Color CLR_BTN_FG       = Color.WHITE;
-    private static final Color CLR_BORDER       = new Color(0xDD, 0xEF, 0xDD);
+    private static final Color CLR_SIDEBAR_BG = AppColors.DARK;
+    private static final Color CLR_SIDEBAR_FG = AppColors.WHITE;
+    private static final Color CLR_HEADER_BG  = AppColors.LIGHT;
+    private static final Color CLR_CONTENT_BG = AppColors.BACKGROUND;
+    private static final Color CLR_CARD_BG    = AppColors.WHITE;
+    private static final Color CLR_ACCENT     = AppColors.DARK;
+    private static final Color CLR_MUTED      = AppColors.PLACEHOLDER_TEXT;
+    private static final Color CLR_SUCCESS    = AppColors.SUCCESS;
+    private static final Color CLR_BTN_LOGOUT = AppColors.DANGER;
+    private static final Color CLR_BTN_HOVER  = AppColors.MOMO;
+    private static final Color CLR_BTN_FG     = AppColors.WHITE;
+    private static final Color CLR_BORDER     = AppColors.LIGHT;
 
-    private static final Font FONT_LOGO         = new Font("Segoe UI", Font.BOLD,  20);
-    private static final Font FONT_NAV          = new Font("Segoe UI", Font.BOLD,  15);
-    private static final Font FONT_TITLE        = new Font("Segoe UI", Font.BOLD,  28);
-    private static final Font FONT_SUBTITLE     = new Font("Segoe UI", Font.PLAIN, 16);
-    private static final Font FONT_CARD_LABEL   = new Font("Segoe UI", Font.PLAIN, 13);
-    private static final Font FONT_CARD_VALUE   = new Font("Segoe UI", Font.BOLD,  15);
-    private static final Font FONT_CLOCK        = new Font("Segoe UI", Font.PLAIN, 13);
-    private static final Font FONT_FOOTER       = new Font("Segoe UI", Font.PLAIN, 12);
+    // ═══════════════════════════════════════════════════════════════════════════
+    // Constants — Fonts (minimum size: 16)
+    // ═══════════════════════════════════════════════════════════════════════════
+    private static final Font FONT_LOGO       = new Font("Segoe UI", Font.BOLD,  20);
+    private static final Font FONT_NAV        = new Font("Segoe UI", Font.BOLD,  16);
+    private static final Font FONT_TITLE      = new Font("Segoe UI", Font.BOLD,  28);
+    private static final Font FONT_SUBTITLE   = new Font("Segoe UI", Font.PLAIN, 16);
+    private static final Font FONT_CARD_LABEL = new Font("Segoe UI", Font.PLAIN, 16);
+    private static final Font FONT_CARD_VALUE = new Font("Segoe UI", Font.BOLD,  16);
+    private static final Font FONT_CLOCK      = new Font("Segoe UI", Font.PLAIN, 16);
+    private static final Font FONT_FOOTER     = new Font("Segoe UI", Font.PLAIN, 16);
 
     // ═══════════════════════════════════════════════════════════════════════════
     // Components
     // ═══════════════════════════════════════════════════════════════════════════
-    private JLabel   lblTime;
-    private JLabel   lblConnectionStatus;
-    private JButton  btnLogout;
+    private JLabel  lblTime;
+    private JButton btnLogout;
 
     // ═══════════════════════════════════════════════════════════════════════════
     // State
@@ -83,10 +85,10 @@ public class MainMenuGui extends JFrame implements ActionListener {
         root.setBackground(CLR_CONTENT_BG);
         setContentPane(root);
 
-        root.add(buildSidebar(),  BorderLayout.WEST);
-        root.add(buildHeader(),   BorderLayout.NORTH);
-        root.add(buildContent(),  BorderLayout.CENTER);
-        root.add(buildFooter(),   BorderLayout.SOUTH);
+        root.add(buildSidebar(), BorderLayout.WEST);
+        root.add(buildHeader(),  BorderLayout.NORTH);
+        root.add(buildContent(), BorderLayout.CENTER);
+        root.add(buildFooter(),  BorderLayout.SOUTH);
     }
 
     // ── Sidebar (Navigation) ──────────────────────────────────────────────────
@@ -95,64 +97,47 @@ public class MainMenuGui extends JFrame implements ActionListener {
         sidebar.setLayout(new BoxLayout(sidebar, BoxLayout.Y_AXIS));
         sidebar.setBackground(CLR_SIDEBAR_BG);
         sidebar.setPreferredSize(new Dimension(200, 0));
-        sidebar.setBorder(new EmptyBorder(0, 0, 0, 0));
 
-        // Logo area
-        JPanel logoPanel = new JPanel(new BorderLayout());
-        logoPanel.setBackground(CLR_SIDEBAR_BG);
-        logoPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
-
-        ImageIcon logoIcon = loadIcon("/images/logo.png");
-        if (logoIcon != null) {
-            // Scale logo to fit sidebar
-            Image scaled = logoIcon.getImage().getScaledInstance(48, 48, Image.SCALE_SMOOTH);
-            JLabel lblLogoImg = new JLabel(new ImageIcon(scaled));
-            logoPanel.add(lblLogoImg, BorderLayout.WEST);
-        }
-        JLabel lblLogoText = new JLabel("MediWOW");
-        lblLogoText.setFont(FONT_LOGO);
-        lblLogoText.setForeground(CLR_SIDEBAR_FG);
-        lblLogoText.setBorder(new EmptyBorder(0, 10, 0, 0));
-        logoPanel.add(lblLogoText, BorderLayout.CENTER);
-        sidebar.add(logoPanel);
-
-        // Divider
-        sidebar.add(buildDivider());
-
-        // Navigation buttons (placeholder — chỉ hiển thị, chưa active)
+        // Navigation buttons at top (placeholder — sẽ implement ở các bước tiếp theo)
         String[][] navItems = {
-            { "🏠  Màn hình chính",    "home"       },
-            { "🧾  Đơn hàng",          "sales"      },
-            { "💊  Sản phẩm",          "product"    },
-            { "🎁  Khuyến mại",        "promotion"  },
-            { "📊  Thống kê",          "statistics" },
-            { "👥  Nhân viên",         "staff"      },
+            { "Màn hình chính", "home",       "/icons/btn_home.png"      },
+            { "Đơn hàng",       "sales",      "/icons/btn_selling.png"   },
+            { "Sản phẩm",       "product",    "/icons/btn_product.png"   },
+            { "Khuyến mại",     "promotion",  "/icons/btn_promotion.png" },
+            { "Thống kê",       "statistics", "/icons/btn_statistic.png" },
+            { "Nhân viên",      "staff",      "/icons/btn_staff.png"     },
         };
 
-        // Ẩn nhân viên nếu là dược sĩ (PHARMACIST)
         boolean isManager = currentStaff.getRole() == Role.MANAGER;
 
         for (String[] item : navItems) {
             if (item[1].equals("staff") && !isManager) continue;
-            sidebar.add(buildNavButton(item[0]));
+            sidebar.add(buildNavButton(item[0], item[2]));
         }
 
-        // Spacer đẩy logout xuống cuối
+        // Spacer — đẩy Đăng xuất xuống cuối
         sidebar.add(Box.createVerticalGlue());
         sidebar.add(buildDivider());
 
-        // Logout button
-        btnLogout = new JButton("🚪  Đăng xuất");
+        // ── Logout button ─────────────────────────────────────────────────────
+        btnLogout = new JButton("Đăng xuất");
         btnLogout.setFont(FONT_NAV);
         btnLogout.setForeground(CLR_BTN_FG);
         btnLogout.setBackground(CLR_BTN_LOGOUT);
         btnLogout.setBorderPainted(false);
         btnLogout.setFocusPainted(false);
         btnLogout.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btnLogout.setAlignmentX(Component.LEFT_ALIGNMENT);
-        btnLogout.setMaximumSize(new Dimension(Integer.MAX_VALUE, 48));
-        btnLogout.setBorder(new EmptyBorder(12, 20, 12, 20));
-        btnLogout.setHorizontalAlignment(SwingConstants.LEFT);
+        btnLogout.setAlignmentX(Component.CENTER_ALIGNMENT);
+        btnLogout.setMaximumSize(new Dimension(Integer.MAX_VALUE, 52));
+        btnLogout.setBorder(new EmptyBorder(12, 16, 12, 16));
+        btnLogout.setHorizontalAlignment(SwingConstants.CENTER);
+        btnLogout.setHorizontalTextPosition(SwingConstants.RIGHT);
+        btnLogout.setIconTextGap(10);
+
+        ImageIcon logoutIcon = loadIcon("/icons/btn_logout.png");
+        if (logoutIcon != null)
+            btnLogout.setIcon(scaleIcon(logoutIcon, 22));
+
         btnLogout.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override public void mouseEntered(java.awt.event.MouseEvent e) { btnLogout.setBackground(CLR_BTN_HOVER); }
             @Override public void mouseExited(java.awt.event.MouseEvent e)  { btnLogout.setBackground(CLR_BTN_LOGOUT); }
@@ -163,31 +148,37 @@ public class MainMenuGui extends JFrame implements ActionListener {
         return sidebar;
     }
 
-    // ── Header (Clock + Connection status) ────────────────────────────────────
+    // ── Header (Logo + Clock + Greeting) ─────────────────────────────────────
     private JPanel buildHeader() {
         JPanel header = new JPanel(new BorderLayout());
         header.setBackground(CLR_HEADER_BG);
-        header.setBorder(new EmptyBorder(12, 24, 12, 24));
+        header.setBorder(new EmptyBorder(10, 20, 10, 24));
 
-        // Left: greeting
-        JLabel lblGreeting = new JLabel("Xin chào, " + currentStaff.getFullName() + "!");
-        lblGreeting.setFont(new Font("Segoe UI", Font.BOLD, 15));
-        lblGreeting.setForeground(CLR_ACCENT);
-        header.add(lblGreeting, BorderLayout.WEST);
+        // ── Left: Logo image + "MediWOW" brand ───────────────────────────────
+        JPanel leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
+        leftPanel.setBackground(CLR_HEADER_BG);
 
-        // Right: clock + connection
-        JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 16, 0));
+        ImageIcon logoIcon = loadIcon("/images/logo.png");
+        if (logoIcon != null) {
+            JLabel lblLogoImg = new JLabel(new ImageIcon(logoIcon.getImage().getScaledInstance(120, 40, Image.SCALE_SMOOTH)));
+            leftPanel.add(lblLogoImg);
+        }
+
+        header.add(leftPanel, BorderLayout.WEST);
+
+        // ── Right: Clock + Greeting ───────────────────────────────────────────
+        JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 0));
         rightPanel.setBackground(CLR_HEADER_BG);
 
         lblTime = new JLabel();
         lblTime.setFont(FONT_CLOCK);
-        lblTime.setForeground(CLR_MUTED);
+        lblTime.setForeground(CLR_ACCENT);
         rightPanel.add(lblTime);
 
-        lblConnectionStatus = new JLabel("● Đã kết nối");
-        lblConnectionStatus.setFont(FONT_CLOCK);
-        lblConnectionStatus.setForeground(CLR_SUCCESS);
-        rightPanel.add(lblConnectionStatus);
+        JLabel lblGreeting = new JLabel("Xin chào, " + currentStaff.getFullName() + "!");
+        lblGreeting.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        lblGreeting.setForeground(CLR_ACCENT);
+        rightPanel.add(lblGreeting);
 
         header.add(rightPanel, BorderLayout.EAST);
         return header;
@@ -199,8 +190,7 @@ public class MainMenuGui extends JFrame implements ActionListener {
         content.setBackground(CLR_CONTENT_BG);
         content.setBorder(new EmptyBorder(40, 40, 40, 40));
 
-        JPanel card = buildWelcomeCard();
-        content.add(card, new GridBagConstraints());
+        content.add(buildWelcomeCard(), new GridBagConstraints());
         return content;
     }
 
@@ -240,16 +230,16 @@ public class MainMenuGui extends JFrame implements ActionListener {
         JPanel infoGrid = new JPanel(new GridLayout(1, 3, 20, 0));
         infoGrid.setBackground(CLR_CARD_BG);
         infoGrid.setAlignmentX(Component.CENTER_ALIGNMENT);
-        infoGrid.add(buildInfoCard("👤  Nhân viên", currentStaff.getFullName()));
-        infoGrid.add(buildInfoCard("🏷️  Vai trò",
+        infoGrid.add(buildInfoCard("Nhân viên", currentStaff.getFullName()));
+        infoGrid.add(buildInfoCard("Vai trò",
                 currentStaff.getRole() == Role.MANAGER ? "Quản lý" : "Dược sĩ"));
-        infoGrid.add(buildInfoCard("🆔  Tài khoản", currentStaff.getUsername()));
+        infoGrid.add(buildInfoCard("Tài khoản", currentStaff.getUsername()));
         card.add(infoGrid);
         card.add(Box.createVerticalStrut(36));
 
         // Note
-        JLabel lblNote = new JLabel("📌  Giao diện menu chính sẽ được hoàn thiện ở các bước tiếp theo.");
-        lblNote.setFont(new Font("Segoe UI", Font.ITALIC, 13));
+        JLabel lblNote = new JLabel("Giao diện menu chính sẽ được hoàn thiện ở các bước tiếp theo.");
+        lblNote.setFont(new Font("Segoe UI", Font.ITALIC, 16));
         lblNote.setForeground(CLR_MUTED);
         lblNote.setAlignmentX(Component.CENTER_ALIGNMENT);
         card.add(lblNote);
@@ -296,7 +286,7 @@ public class MainMenuGui extends JFrame implements ActionListener {
     }
 
     // ── Nav button factory ────────────────────────────────────────────────────
-    private JButton buildNavButton(String text) {
+    private JButton buildNavButton(String text, String iconPath) {
         JButton btn = new JButton(text);
         btn.setFont(FONT_NAV);
         btn.setForeground(CLR_SIDEBAR_FG);
@@ -304,13 +294,19 @@ public class MainMenuGui extends JFrame implements ActionListener {
         btn.setBorderPainted(false);
         btn.setFocusPainted(false);
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btn.setAlignmentX(Component.LEFT_ALIGNMENT);
-        btn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 48));
-        btn.setBorder(new EmptyBorder(12, 20, 12, 20));
-        btn.setHorizontalAlignment(SwingConstants.LEFT);
-        Color hover = new Color(0x1A, 0x5C, 0x2A);
+        btn.setAlignmentX(Component.CENTER_ALIGNMENT);
+        btn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 52));
+        btn.setBorder(new EmptyBorder(12, 16, 12, 16));
+        btn.setHorizontalAlignment(SwingConstants.CENTER);
+        btn.setHorizontalTextPosition(SwingConstants.RIGHT);
+        btn.setIconTextGap(10);
+
+        ImageIcon icon = loadIcon(iconPath);
+        if (icon != null)
+            btn.setIcon(scaleIcon(icon, 22));
+
         btn.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override public void mouseEntered(java.awt.event.MouseEvent e) { btn.setBackground(hover); }
+            @Override public void mouseEntered(java.awt.event.MouseEvent e) { btn.setBackground(AppColors.PRIMARY); }
             @Override public void mouseExited(java.awt.event.MouseEvent e)  { btn.setBackground(CLR_SIDEBAR_BG); }
         });
         // Placeholder — chưa có action (sẽ implement ở các bước tiếp theo)
@@ -322,7 +318,7 @@ public class MainMenuGui extends JFrame implements ActionListener {
     // ── Sidebar divider ───────────────────────────────────────────────────────
     private JSeparator buildDivider() {
         JSeparator sep = new JSeparator();
-        sep.setForeground(new Color(0x1A, 0x5C, 0x2A));
+        sep.setForeground(AppColors.PRIMARY);
         sep.setBackground(CLR_SIDEBAR_BG);
         sep.setMaximumSize(new Dimension(Integer.MAX_VALUE, 1));
         return sep;
@@ -353,7 +349,7 @@ public class MainMenuGui extends JFrame implements ActionListener {
         timer.start();
     }
 
-    // ── Load image safely ─────────────────────────────────────────────────────
+    // ── Load image safely (returns null if not found) ─────────────────────────
     private ImageIcon loadIcon(String path) {
         try {
             var url = getClass().getResource(path);
@@ -361,6 +357,12 @@ public class MainMenuGui extends JFrame implements ActionListener {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    // ── Scale an icon to a square size ───────────────────────────────────────
+    private ImageIcon scaleIcon(ImageIcon icon, int size) {
+        Image scaled = icon.getImage().getScaledInstance(size, size, Image.SCALE_SMOOTH);
+        return new ImageIcon(scaled);
     }
 
     // ═══════════════════════════════════════════════════════════════════════════

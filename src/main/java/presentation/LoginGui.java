@@ -17,22 +17,26 @@ import java.util.function.Consumer;
 /**
  * Giao diện đăng nhập — thuần Java Swing, không sử dụng UI Designer.
  * Sử dụng SwingWorker để giao tiếp với server qua NetworkService.
+ * Màu sắc lấy từ AppColors.
  */
 public class LoginGui extends JFrame implements ActionListener {
 
     // ═══════════════════════════════════════════════════════════════════════════
-    // Constants — Colors & Fonts
+    // Colors — sử dụng AppColors
     // ═══════════════════════════════════════════════════════════════════════════
-    private static final Color CLR_BG_LEFT      = new Color(0xDD, 0xEF, 0xDD);   // #DDEFDD — xanh lá nhạt
-    private static final Color CLR_BG_RIGHT     = Color.WHITE;
-    private static final Color CLR_WELCOME      = new Color(0x0F, 0x37, 0x1B);   // #0F371B — xanh lá đậm
-    private static final Color CLR_LABEL        = new Color(0x0F, 0x37, 0x1B);
-    private static final Color CLR_FOOTER       = new Color(0x88, 0x88, 0x88);
-    private static final Color CLR_BTN_LOGIN    = new Color(0x0F, 0x37, 0x1B);
-    private static final Color CLR_BTN_HOVER    = new Color(0x1A, 0x5C, 0x2A);
-    private static final Color CLR_BTN_FORGOT   = new Color(0x0F, 0x37, 0x1B);
-    private static final Color CLR_BTN_FG       = new Color(0xFF, 0xFA, 0xEA);   // #FFFAEA
+    private static final Color CLR_BG_LEFT      = AppColors.LIGHT;
+    private static final Color CLR_BG_RIGHT     = AppColors.WHITE;
+    private static final Color CLR_WELCOME      = AppColors.DARK;
+    private static final Color CLR_LABEL        = AppColors.DARK;
+    private static final Color CLR_FOOTER       = AppColors.PLACEHOLDER_TEXT;
+    private static final Color CLR_BTN_LOGIN    = AppColors.PRIMARY;
+    private static final Color CLR_BTN_HOVER    = AppColors.DARK;
+    private static final Color CLR_BTN_FORGOT   = AppColors.SECONDARY;
+    private static final Color CLR_BTN_FG       = AppColors.WHITE;
 
+    // ═══════════════════════════════════════════════════════════════════════════
+    // Fonts
+    // ═══════════════════════════════════════════════════════════════════════════
     private static final Font FONT_WELCOME      = new Font("Segoe UI", Font.BOLD,  36);
     private static final Font FONT_SUBWELCOME   = new Font("Segoe UI", Font.PLAIN, 20);
     private static final Font FONT_LABEL        = new Font("Segoe UI", Font.PLAIN, 16);
@@ -85,7 +89,7 @@ public class LoginGui extends JFrame implements ActionListener {
         // Logo
         JLabel lblLogo = new JLabel();
         lblLogo.setIcon(loadIcon("/images/logo.png"));
-        lblLogo.setHorizontalAlignment(SwingConstants.RIGHT);
+        lblLogo.setHorizontalAlignment(SwingConstants.LEFT);
         gbc.gridx = 0; gbc.gridy = 0;
         gbc.anchor = GridBagConstraints.EAST;
         gbc.ipadx = 200;
@@ -110,8 +114,8 @@ public class LoginGui extends JFrame implements ActionListener {
         panel.setBorder(new EmptyBorder(40, 60, 40, 60));
 
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.fill   = GridBagConstraints.HORIZONTAL;
-        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill    = GridBagConstraints.HORIZONTAL;
+        gbc.anchor  = GridBagConstraints.WEST;
         gbc.weightx = 1.0;
 
         // ── Header ───────────────────────────────────────────────────────────
@@ -163,7 +167,7 @@ public class LoginGui extends JFrame implements ActionListener {
         // ── Status label (error/info messages) ────────────────────────────────
         lblStatus = new JLabel(" ");
         lblStatus.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        lblStatus.setForeground(new Color(0xCC, 0x00, 0x00));
+        lblStatus.setForeground(AppColors.DANGER);
         gbc.gridy = 6;
         gbc.insets = new Insets(0, 0, 16, 0);
         panel.add(lblStatus, gbc);
@@ -172,8 +176,8 @@ public class LoginGui extends JFrame implements ActionListener {
         JPanel pnlButton = new JPanel(new GridLayout(1, 2, 12, 0));
         pnlButton.setBackground(CLR_BG_RIGHT);
 
-        btnLogin = buildButton("Đăng nhập", CLR_BTN_LOGIN, CLR_BTN_HOVER, CLR_BTN_FG);
-        btnForgotPassword = buildButton("Quên mật khẩu", CLR_BTN_FORGOT, CLR_BTN_HOVER, CLR_BTN_FG);
+        btnLogin         = buildButton("Đăng nhập",    CLR_BTN_LOGIN,  AppColors.DARK,    CLR_BTN_FG);
+        btnForgotPassword = buildButton("Quên mật khẩu", CLR_BTN_FORGOT, AppColors.PRIMARY, CLR_BTN_FG);
         pnlButton.add(btnLogin);
         pnlButton.add(btnForgotPassword);
 
