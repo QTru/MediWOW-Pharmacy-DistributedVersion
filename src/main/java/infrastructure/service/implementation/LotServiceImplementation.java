@@ -36,7 +36,7 @@ public class LotServiceImplementation implements LotService {
 
         Lot lot = Mapper.map(lotDto);
         lot = lotRepository.update(lot);
-        return null;
+        return Mapper.map(lot);
     }
 
     @Override
