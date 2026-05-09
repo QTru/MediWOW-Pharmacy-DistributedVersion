@@ -2,6 +2,7 @@ package core.dto;
 
 import lombok.*;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -11,7 +12,7 @@ import java.util.List;
 @NoArgsConstructor
 @ToString
 @Builder
-public class PromotionDto {
+public class PromotionDto implements Serializable {
     private String id;
     private String name;
     private String description;

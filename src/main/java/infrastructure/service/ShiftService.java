@@ -8,5 +8,6 @@ public interface ShiftService {
     ShiftDto create(ShiftDto shiftDto);
     ShiftDto update(ShiftDto shiftDto);
     ShiftDto findById(String id);
+    ShiftDto findActiveByWorkStation(String workStation);
     List<ShiftDto> loadAll();
 }

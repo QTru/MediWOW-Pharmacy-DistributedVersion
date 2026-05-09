@@ -5,6 +5,7 @@ import core.entities.enums.ConditionType;
 import core.entities.enums.Target;
 import lombok.*;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 
 @Getter
@@ -13,7 +14,7 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @ToString
 @Builder
-public class PromotionConditionDto {
+public class PromotionConditionDto implements Serializable {
     private String id;
     private String promotionId;
     private ConditionType type;

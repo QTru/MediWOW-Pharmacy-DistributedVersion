@@ -35,4 +35,17 @@ public class ShiftRepositoryImplementation extends AbstractGenericRepositoryImpl
             return shift;
         });
     }
+
+    @Override
+    public Shift findActiveByWorkStation(String workStation) {
+        String query = "FROM Shift s WHERE s.workStation = :workStation AND s.status = :status ORDER BY s.startTime DESC";
+
+        return doInTransaction(em -> em.createQuery(query, Shift.class)
+                .setParameter("workStation", workStation)
+                .setParameter("status", ShiftStatus.OPEN)
+                .setMaxResults(1)
+                .getResultStream()
+                .findFirst()
+                .orElse(null));
+    }
 }

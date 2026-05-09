@@ -204,7 +204,7 @@ public class MainMenuGui extends JFrame implements ActionListener {
         contentArea.add(new ProductGui(networkService), "product");
 
         // ── Các card khác (placeholder) — thêm sau khi implement ─────────────
-        contentArea.add(buildPlaceholder("Đơn hàng"),  "sales");
+        contentArea.add(new InvoiceMenuGui(networkService, currentStaff), "sales");
         contentArea.add(buildPlaceholder("Khuyến mại"), "promotion");
         contentArea.add(new StatisticalGui(networkService),  "statistics");
         contentArea.add(buildPlaceholder("Nhân viên"), "staff");

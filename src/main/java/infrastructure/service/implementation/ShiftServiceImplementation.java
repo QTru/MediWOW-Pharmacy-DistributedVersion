@@ -51,6 +51,15 @@ public class ShiftServiceImplementation implements ShiftService {
     }
 
     @Override
+    public ShiftDto findActiveByWorkStation(String workStation) {
+        if (workStation == null || workStation.isBlank())
+            throw new IllegalArgumentException("Work station cannot be null or blank");
+
+        Shift shift = shiftRepository.findActiveByWorkStation(workStation);
+        return shift == null ? null : Mapper.map(shift);
+    }
+
+    @Override
     public List<ShiftDto> loadAll() {
         return shiftRepository.loadAll()
                 .stream()

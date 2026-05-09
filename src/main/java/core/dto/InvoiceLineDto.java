@@ -3,6 +3,7 @@ package core.dto;
 import core.entities.enums.InvoiceLineType;
 import lombok.*;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -12,7 +13,7 @@ import java.util.List;
 @NoArgsConstructor
 @ToString
 @Builder
-public class InvoiceLineDto {
+public class InvoiceLineDto implements Serializable {
     private String invoiceId;
     private String productId;
     private String measurementId;

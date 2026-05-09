@@ -73,7 +73,9 @@ public class InvoiceServiceImplementation implements InvoiceService {
             throw new IllegalArgumentException("Creator id cannot be null or blank");
         if (invoiceDto.getShiftId() == null || invoiceDto.getShiftId().isBlank())
             throw new IllegalArgumentException("Shift id cannot be null or blank");
-        if (!isPhoneNumberValid(invoiceDto.getCustomerPhoneNumber()))
+        if (invoiceDto.getCustomerPhoneNumber() != null
+                && !invoiceDto.getCustomerPhoneNumber().isBlank()
+                && !isPhoneNumberValid(invoiceDto.getCustomerPhoneNumber()))
             throw new IllegalArgumentException("Customer phone number must be a non-empty string of digits");
         if (invoiceDto.getInvoiceLines() == null || invoiceDto.getInvoiceLines().isEmpty())
             throw new IllegalArgumentException("Invoice must have at least one invoice line");

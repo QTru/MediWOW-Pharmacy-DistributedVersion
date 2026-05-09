@@ -4,6 +4,7 @@ import core.entities.enums.ActionType;
 import core.entities.enums.Target;
 import lombok.*;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 
 @Getter
@@ -12,7 +13,7 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @ToString
 @Builder
-public class PromotionActionDto {
+public class PromotionActionDto implements Serializable {
     private String id;
     private String promotionId;
     private int actionOrder;

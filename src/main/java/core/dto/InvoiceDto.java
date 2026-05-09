@@ -4,6 +4,7 @@ import core.entities.enums.InvoiceType;
 import core.entities.enums.PaymentMethod;
 import lombok.*;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -13,7 +14,7 @@ import java.util.List;
 @NoArgsConstructor
 @ToString(exclude = "invoiceLines")
 @Builder
-public class InvoiceDto {
+public class InvoiceDto implements Serializable {
     private String id;
     private InvoiceType type;
     private String note;

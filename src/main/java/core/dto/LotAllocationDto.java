@@ -4,6 +4,7 @@ import core.entities.enums.InvoiceLineType;
 import core.entities.enums.LotStatus;
 import lombok.*;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
 @Getter
@@ -12,7 +13,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @ToString
 @Builder
-public class LotAllocationDto {
+public class LotAllocationDto implements Serializable {
     private String invoiceId;
     private String productId;
     private String measurementId;
