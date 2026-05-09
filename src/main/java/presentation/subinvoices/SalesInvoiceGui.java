@@ -271,15 +271,22 @@ public class SalesInvoiceGui extends JPanel implements
         body.add(buildGeneralInfoPanel());
         body.add(Box.createVerticalStrut(14));
         body.add(buildPaymentInfoPanel());
-        body.add(Box.createVerticalStrut(16));
 
+        // ✅ Bọc body trong JScrollPane — chỉ vertical, không horizontal
+        JScrollPane scrollPane = new JScrollPane(body,
+                ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        scrollPane.setBorder(null);
+        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        root.add(scrollPane, BorderLayout.CENTER);
+
+        // ✅ Footer nằm ngoài scroll — luôn hiển thị ở cuối
         JPanel footer = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
         footer.setOpaque(false);
         btnProcessPayment = createActionButton("Thanh toán", "btnProcessPayment");
         footer.add(btnProcessPayment);
-        body.add(footer);
+        root.add(footer, BorderLayout.SOUTH);
 
-        root.add(body, BorderLayout.CENTER);
         return root;
     }
 
