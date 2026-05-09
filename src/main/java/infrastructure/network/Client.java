@@ -10,7 +10,7 @@ import javax.swing.*;
  * GUI không biết gì về socket, chỉ biết NetworkService.
  */
 public class Client {
-    private static final String HOST = "localhost";
+    private static final String HOST = "TRUNGNGUYEN";
     private static final int    PORT = 9090;
 
     public static void main(String[] args) {

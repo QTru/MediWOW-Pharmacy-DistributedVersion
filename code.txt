@@ -1,0 +1,125 @@
+Bức tranh tổng quan (để báo cáo)
+•
+Project là Java Maven thuần (không Spring), chia 2 package chính: core (domain) và infrastructure (hạ tầng truy cập DB + service + mapping).
+•
+DB dùng JPA/Hibernate cấu hình ở src/main/resources/META-INF/persistence.xml (MariaDB jdbc:mariadb://localhost:3306/mediwow, user root, password sapassword, hibernate.hbm2ddl.auto=update).
+1) Cấu trúc code (tầng nào làm gì)
+•
+core/entities/*: Entity JPA tương ứng bảng DB (Customer, Staff, Product, Lot, Invoice, Promotion, Shift, …). Đây là “mô hình dữ liệu thật” mà Hibernate persist.
+•
+core/dto/*: DTO dùng để giao tiếp/trao đổi dữ liệu “phẳng hơn” (thường chỉ id/field cần thiết), giảm dính chặt entity graph.
+•
+core/utils/idgenerator/*: cơ chế sinh ID dạng PREFIX + số dựa trên DB sequence.
+•
+infrastructure/db/JPAUtil.java: tạo EntityManagerFactory và cấp EntityManager cho repository.
+•
+infrastructure/persistence/*: interface repository (CRUD).
+•
+infrastructure/persistence/implementation/*: hiện thực repository bằng JPA, quản lý transaction và custom logic khi create/update.
+•
+infrastructure/service/* + implementation/*: lớp “nghiệp vụ” (validate input DTO, gọi repository, map DTO<->Entity).
+•
+infrastructure/mapper/Mapper.java: map DTO<->Entity bằng Jackson ObjectMapper, kèm các đoạn map thủ công để set quan hệ theo ID.
+2) Luồng dữ liệu chuẩn (DTO -> Service -> Repository -> DB) Ví dụ tạo hóa đơn:
+1.
+Caller tạo InvoiceDto (có creatorId, shiftId, customerPhoneNumber, invoiceLines…).
+2.
+InvoiceServiceImplementation.create(...) validate dữ liệu, map InvoiceDto -> Invoice rồi set creationDate, gọi repository.
+3.
+InvoiceRepositoryImplementation.create(...) chạy trong transaction:
+◦
+em.find(...) để “resolve” các quan hệ thật: Staff/Shift/UoM/Lot/Promotion/ReferencedInvoice.
+◦
+với Customer: nếu đã tồn tại theo phone thì merge, chưa có thì set creationDate để persist mới.
+◦
+em.persist(invoice) và return entity.
+4.
+Service map Invoice -> InvoiceDto để trả về.
+3) Các hàm “xương sống” và nó trả về gì
+•
+infrastructure/db/JPAUtil.getEntityManager():
+◦
+Dùng để lấy EntityManager mới (mỗi transaction/repo call tạo 1 cái).
+◦
+Trả về: EntityManager.
+•
+infrastructure/persistence/implementation/AbstractGenericRepositoryImplementation.doInTransaction(Function<EntityManager,R>):
+◦
+Mở EntityManager, begin/commit/rollback transaction, đảm bảo em.close() ở finally.
+◦
+Trả về: R (kết quả của function bạn truyền vào). Nếu lỗi: ném RuntimeException(ex).
+•
+CRUD chuẩn (GenericRepository<T,ID>):
+◦
+create(T t) trả về chính entity t sau em.persist(t) (đã được Hibernate quản lý trong transaction).
+◦
+update(T t) trả về entity sau em.merge(t) (thường là instance managed).
+◦
+findById(ID id) trả về entity hoặc null.
+◦
+loadAll() trả về List<T> từ query "FROM <EntityName>".
+•
+infrastructure/mapper/Mapper.map(S source, Class<T> target):
+◦
+Dùng objectMapper.convertValue để copy field cùng tên.
+◦
+Trả về: object kiểu T.
+•
+infrastructure/mapper/Mapper.map(Invoice) / Mapper.map(InvoiceDto) (và các cặp map khác):
+◦
+Ngoài convertValue, nó “bơm” thêm các field quan hệ: ví dụ Invoice.creator -> creatorId/creatorFullName, hoặc DTO ids -> entity “stub” (Staff.builder().id(...).build()).
+◦
+Trả về: InvoiceDto hoặc Invoice tương ứng.
+•
+Sinh ID:
+◦
+Annotation core/utils/idgenerator/implementation/GeneratedId.java gắn lên field @Id.
+◦
+core/utils/idgenerator/GenericIdGenerator.generate(...) chạy lúc INSERT:
+▪
+Query native: SELECT nextval(seq_xxx) lấy số tiếp theo từ DB sequence.
+▪
+Format: prefix + String.format("%0<numberLength>d", value)
+▪
+Trả về: String ID kiểu INV000001, PRO000001, …
+◦
+core/utils/idgenerator/SequenceInitializer.createSequences(EntityManager em):
+▪
+Tạo các sequence seq_customer_id, seq_invoice_id, …
+▪
+Trả về: void.
+◦
+core/CreateDBSchema.main(...):
+▪
+Khởi tạo EntityManagerFactory, mở transaction, gọi SequenceInitializer.createSequences.
+•
+Một số hàm “tính toán” nằm trong entity:
+◦
+core/entities/InvoiceLine.calculateSubtotal() trả về unitPrice * quantity (BigDecimal), null price -> 0.
+◦
+core/entities/InvoiceLine.calculateVatAmount() lấy VAT từ Product.vat (%), đổi về rate rồi nhân subtotal, trả về BigDecimal.
+◦
+core/entities/InvoiceLine.calculateTotalAmount() = subtotal + VAT, trả về BigDecimal.
+◦
+core/entities/UnitOfMeasure.computeDerivedFields() (JPA callback @PrePersist/@PreUpdate):
+▪
+Nếu là base unit thì rate = 1.
+▪
+Tính basePriceConversionRate = 1 / baseUnitConversionRate (scale 10), dùng cho quy đổi giá.
+▪
+Không trả về (void) nhưng nó “tự động” cập nhật field trước khi lưu DB.
+4) Những chỗ đáng nói khi thuyết trình (đúng “ý đồ kiến trúc”)
+•
+Transaction boundary nằm ở repository (doInTransaction), service tập trung validate + orchestration.
+•
+Quan hệ phức tạp dùng composite key:
+◦
+UnitOfMeasure có khóa ghép (product_id, measurement_id) (@IdClass UnitOfMeasureId).
+◦
+InvoiceLine có khóa ghép (invoice_id, uom_product_id, uom_measurement_id, type).
+◦
+LotAllocation tham chiếu composite key của InvoiceLine + lot_id.
+•
+Repository create/update “resolve” quan hệ bằng em.find(...) để tránh persist nhầm object stub và tránh lỗi identity.
+5) Bạn đang hỏi “hàm này” là hàm nào? Gửi mình tên file + tên hàm (ví dụ Mapper.map(InvoiceDto) hoặc InvoiceRepositoryImplementation.create) là mình sẽ viết đoạn giải thích theo đúng format báo cáo: input gì, validate gì, query gì, output gì, edge case gì.
+(Đoạn này mình chưa chạy code vì bạn đang cần phần thuyết minh; nếu cần demo, trong mỗi *ServiceImplementation.java thường có main() để chạy thử create/find/update.)
