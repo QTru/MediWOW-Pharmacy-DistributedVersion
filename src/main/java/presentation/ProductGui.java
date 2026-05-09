@@ -91,6 +91,9 @@ public class ProductGui extends JPanel {
     private List<ProductDto>     productList = new ArrayList<>();
     private ProductDto           selectedProduct;
 
+    // [GUARD] Cờ ngăn thao tác khi đang loading
+    private boolean isLoading = false;
+
     private static final DateTimeFormatter DATE_FMT =
             DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
@@ -144,16 +147,37 @@ public class ProductGui extends JPanel {
         toolbar.add(btnSearch);
 
         btnReload = makeBtn("Tải lại", CLR_ACCENT);
-        btnReload.addActionListener(e -> loadProducts());
+        btnReload.addActionListener(e -> {
+            // [GUARD] Không cho tải lại khi đang loading
+            if (isLoading) return;
+            loadProducts();
+        });
         toolbar.add(btnReload);
 
         btnAdd = makeBtn("+ Thêm", CLR_SUCCESS);
-        btnAdd.addActionListener(e -> openAddDialog());
+        btnAdd.addActionListener(e -> {
+            // [GUARD] Không mở dialog khi đang loading
+            if (isLoading) {
+                showWarn("Vui lòng chờ dữ liệu tải xong trước khi thêm sản phẩm.");
+                return;
+            }
+            openAddDialog();
+        });
         toolbar.add(btnAdd);
 
+        // [GUARD] btnEdit disable sẵn, chỉ enable khi có dòng được chọn
         btnEdit = makeBtn("✎ Sửa", CLR_WARNING);
         btnEdit.setForeground(Color.BLACK);
-        btnEdit.addActionListener(e -> openEditDialog());
+        btnEdit.setEnabled(false);
+        btnEdit.setToolTipText("Chọn một sản phẩm trong danh sách để sửa");
+        btnEdit.addActionListener(e -> {
+            // [GUARD] Không mở dialog khi đang loading
+            if (isLoading) {
+                showWarn("Vui lòng chờ dữ liệu tải xong trước khi sửa sản phẩm.");
+                return;
+            }
+            openEditDialog();
+        });
         toolbar.add(btnEdit);
 
         bar.add(toolbar, BorderLayout.EAST);
@@ -184,8 +208,14 @@ public class ProductGui extends JPanel {
         sorterProduct = new TableRowSorter<>(mdlProduct);
         tblProduct.setRowSorter(sorterProduct);
 
+        // [GUARD] Enable/disable btnEdit theo selection; chặn khi đang loading
         tblProduct.getSelectionModel().addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting()) onProductSelected();
+            if (!e.getValueIsAdjusting()) {
+                boolean hasSelection = tblProduct.getSelectedRow() >= 0;
+                // Chỉ enable btnEdit khi có selection VÀ không đang loading
+                btnEdit.setEnabled(hasSelection && !isLoading);
+                if (hasSelection) onProductSelected();
+            }
         });
 
         JScrollPane scroll = new JScrollPane(tblProduct);
@@ -425,7 +455,6 @@ public class ProductGui extends JPanel {
 
                     productList.clear();
                     mdlProduct.setRowCount(0);
-                    int skipped = 0;
                     for (Object obj : list) {
                         if (obj instanceof ProductDto dto) {
                             productList.add(dto);
@@ -434,8 +463,6 @@ public class ProductGui extends JPanel {
                                     dto.getShortName(), categoryLabel(dto.getCategory()),
                                     formLabel(dto.getForm()), dto.getManufacturer()
                             });
-                        } else {
-                            skipped++;
                         }
                     }
 
@@ -443,7 +470,6 @@ public class ProductGui extends JPanel {
                         showError("Dữ liệu nhận được nhưng không parse được ProductDto.");
                     }
                 }),
-                // [FIX] Tải lại: đảm bảo setLoading(false) luôn chạy kể cả khi lỗi
                 ex -> SwingUtilities.invokeLater(() -> {
                     setLoading(false);
                     showError("Lỗi kết nối: " + ex.getMessage());
@@ -488,7 +514,7 @@ public class ProductGui extends JPanel {
     // ═════════════════════════════════════════════════════════════════════════
     private void openAddDialog() {
         ProductFormDialog dialog = new ProductFormDialog(
-                getParentFrame(), networkService, null,
+                getParentFrame(), networkService, null, productList,
                 saved -> {
                     productList.add(saved);
                     mdlProduct.addRow(new Object[]{
@@ -507,7 +533,7 @@ public class ProductGui extends JPanel {
             return;
         }
         ProductFormDialog dialog = new ProductFormDialog(
-                getParentFrame(), networkService, selectedProduct,
+                getParentFrame(), networkService, selectedProduct, productList,
                 updated -> {
                     int row = productList.indexOf(selectedProduct);
                     if (row >= 0) {
@@ -541,8 +567,12 @@ public class ProductGui extends JPanel {
         btn.setBorder(new EmptyBorder(8, 16, 8, 16));
         btn.addMouseListener(new MouseAdapter() {
             final Color orig = bg;
-            @Override public void mouseEntered(MouseEvent e) { btn.setBackground(orig.darker()); }
-            @Override public void mouseExited(MouseEvent e)  { btn.setBackground(orig); }
+            @Override public void mouseEntered(MouseEvent e) {
+                if (btn.isEnabled()) btn.setBackground(orig.darker());
+            }
+            @Override public void mouseExited(MouseEvent e) {
+                if (btn.isEnabled()) btn.setBackground(orig);
+            }
         });
         return btn;
     }
@@ -586,11 +616,26 @@ public class ProductGui extends JPanel {
         return String.format("%,.0f", val);
     }
 
+    /**
+     * [GUARD] Bật/tắt trạng thái loading:
+     * - Disable toàn bộ toolbar controls
+     * - Cập nhật cờ isLoading để các guard khác kiểm tra
+     * - btnEdit chỉ enable khi KHÔNG loading VÀ có selection
+     */
     private void setLoading(boolean loading) {
-        // [FIX] Tải lại: kiểm tra null tránh NPE nếu btn chưa khởi tạo xong
         if (btnReload == null) return;
+        isLoading = loading;
+
         btnReload.setEnabled(!loading);
         btnReload.setText(loading ? "Đang tải..." : "Tải lại");
+
+        btnAdd.setEnabled(!loading);
+        btnSearch.setEnabled(!loading);
+        tfSearch.setEnabled(!loading);
+
+        // btnEdit chỉ enable khi không loading VÀ có dòng đang chọn
+        boolean hasSelection = tblProduct != null && tblProduct.getSelectedRow() >= 0;
+        btnEdit.setEnabled(!loading && hasSelection);
     }
 
     private void showError(String msg) {
@@ -606,10 +651,6 @@ public class ProductGui extends JPanel {
         return w instanceof JFrame f ? f : null;
     }
 
-    /**
-     * [FIX] Tải lại: unwrap ExecutionException để onError nhận đúng cause,
-     * tránh trường hợp message bị null hoặc ẩn sau lớp wrapper.
-     */
     private void sendAsync(CommandType cmd, Object data,
                            Consumer<Response> onSuccess,
                            Consumer<Exception> onError) {
@@ -621,7 +662,6 @@ public class ProductGui extends JPanel {
                 try {
                     onSuccess.accept(get());
                 } catch (ExecutionException e) {
-                    // Unwrap để lấy exception gốc (không phải ExecutionException wrapper)
                     Throwable cause = e.getCause();
                     onError.accept(cause instanceof Exception ex ? ex
                             : new RuntimeException(cause));
@@ -676,7 +716,6 @@ public class ProductGui extends JPanel {
         private List<UomRowData>  uomRows = new ArrayList<>();
 
         // ── Tab 3: Lô hàng ────────────────────────────────────────────────────
-        // [FIX] Thêm tab Lô hàng
         private static final String[] LOT_COLS_FORM = {
                 "Số lô", "SL nhập", "Giá nhập (đ)", "HSD (dd/MM/yyyy)", "Trạng thái"
         };
@@ -688,34 +727,59 @@ public class ProductGui extends JPanel {
         private final NetworkService       networkService;
         private final ProductDto           editTarget;
         private final Consumer<ProductDto> onSaved;
+        private final List<ProductDto>     allProducts;   // [VALIDATE] để kiểm tra trùng mã vạch
         private List<MeasurementDto>       measurements = new ArrayList<>();
 
-        // Lưu tham chiếu nút Save để enable/disable
+        // [GUARD] Cờ ngăn thao tác khi đang lưu
+        private boolean isSaving = false;
+
         private JButton btnSave;
 
+        // ── Constructor ───────────────────────────────────────────────────────
+        /**
+         * @param allProducts danh sách toàn bộ sản phẩm hiện có,
+         *                    dùng để validate trùng mã vạch phía client.
+         */
         ProductFormDialog(JFrame parent, NetworkService ns,
                           ProductDto editTarget,
+                          List<ProductDto> allProducts,
                           Consumer<ProductDto> onSaved) {
             super(parent,
                     editTarget == null ? "Thêm sản phẩm mới" : "Sửa sản phẩm",
                     true);
             this.networkService = ns;
             this.editTarget     = editTarget;
+            this.allProducts    = allProducts != null ? allProducts : List.of();
             this.onSaved        = onSaved;
             initDialog();
             loadMeasurements();
             if (editTarget != null) fillForm(editTarget);
         }
 
+        // ── UI ────────────────────────────────────────────────────────────────
         private void initDialog() {
             setSize(820, 660);
             setMinimumSize(new Dimension(720, 580));
             setLocationRelativeTo(getOwner());
             setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+
+            // [GUARD] Chặn đóng dialog khi đang lưu
+            addWindowListener(new WindowAdapter() {
+                @Override
+                public void windowClosing(WindowEvent e) {
+                    if (isSaving) {
+                        JOptionPane.showMessageDialog(ProductFormDialog.this,
+                                "Đang lưu dữ liệu, vui lòng chờ...",
+                                "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+                    }
+                    // Chỉ đóng khi không đang lưu (setDefaultCloseOperation = DO_NOTHING
+                    // nếu muốn chặn cứng; ở đây chỉ cảnh báo)
+                }
+            });
+
             getContentPane().setBackground(D_BG);
             getContentPane().setLayout(new BorderLayout(0, 0));
 
-            // Header
             JPanel header = new JPanel(new BorderLayout());
             header.setBackground(D_ACCENT);
             header.setBorder(new EmptyBorder(14, 20, 14, 20));
@@ -726,19 +790,18 @@ public class ProductGui extends JPanel {
             header.add(lblTitle, BorderLayout.WEST);
             getContentPane().add(header, BorderLayout.NORTH);
 
-            // Tabs — [FIX] thêm tab "Lô hàng"
             JTabbedPane tabs = new JTabbedPane();
             tabs.setFont(FD_SEC);
             tabs.addTab("Thông tin cơ bản", buildBasicTab());
             tabs.addTab("Đơn vị tính",      buildUomTab());
-            tabs.addTab("Lô hàng",          buildLotTab());   // [FIX]
+            tabs.addTab("Lô hàng",          buildLotTab());
             tabs.setBorder(new EmptyBorder(10, 10, 0, 10));
             getContentPane().add(tabs, BorderLayout.CENTER);
 
             getContentPane().add(buildFooterButtons(), BorderLayout.SOUTH);
         }
 
-        // ── Tab 1: Thông tin cơ bản ───────────────────────────────────────────
+        // ── Tab 1 ─────────────────────────────────────────────────────────────
         private JScrollPane buildBasicTab() {
             JPanel panel = new JPanel(new GridBagLayout());
             panel.setBackground(D_WHITE);
@@ -834,9 +897,23 @@ public class ProductGui extends JPanel {
             JButton btnRemUom = dlgBtn("✕ Xóa",         D_DANGER);
 
             btnAddUom.addActionListener(e -> openAddUomDialog());
+
+            // [CONFIRM] Xác nhận trước khi xóa UOM
             btnRemUom.addActionListener(e -> {
                 int selRow = tblUom.getSelectedRow();
-                if (selRow >= 0) {
+                if (selRow < 0) {
+                    JOptionPane.showMessageDialog(this,
+                            "Vui lòng chọn đơn vị tính cần xóa.",
+                            "Chưa chọn dòng", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+                String unitName = uomRows.get(selRow).measurement() != null
+                        ? uomRows.get(selRow).measurement().getName() : "?";
+                int confirm = JOptionPane.showConfirmDialog(this,
+                        "Xóa đơn vị \"" + unitName + "\" khỏi danh sách?",
+                        "Xác nhận xóa", JOptionPane.YES_NO_OPTION,
+                        JOptionPane.WARNING_MESSAGE);
+                if (confirm == JOptionPane.YES_OPTION) {
                     uomRows.remove(selRow);
                     mdlUom.removeRow(selRow);
                 }
@@ -849,7 +926,6 @@ public class ProductGui extends JPanel {
         }
 
         // ── Tab 3: Lô hàng ────────────────────────────────────────────────────
-        // [FIX] Toàn bộ method này là mới
         private JPanel buildLotTab() {
             JPanel panel = new JPanel(new BorderLayout(0, 8));
             panel.setBackground(D_WHITE);
@@ -872,9 +948,22 @@ public class ProductGui extends JPanel {
             JButton btnRemLot = dlgBtn("✕ Xóa",     D_DANGER);
 
             btnAddLot.addActionListener(e -> openAddLotDialog());
+
+            // [CONFIRM] Xác nhận trước khi xóa lô
             btnRemLot.addActionListener(e -> {
                 int selRow = tblLot.getSelectedRow();
-                if (selRow >= 0) {
+                if (selRow < 0) {
+                    JOptionPane.showMessageDialog(this,
+                            "Vui lòng chọn lô hàng cần xóa.",
+                            "Chưa chọn dòng", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+                int batchNum = lotRows.get(selRow).batchNumber();
+                int confirm = JOptionPane.showConfirmDialog(this,
+                        "Xóa lô số \"" + batchNum + "\" khỏi danh sách?",
+                        "Xác nhận xóa", JOptionPane.YES_NO_OPTION,
+                        JOptionPane.WARNING_MESSAGE);
+                if (confirm == JOptionPane.YES_OPTION) {
                     lotRows.remove(selRow);
                     mdlLot.removeRow(selRow);
                 }
@@ -887,7 +976,6 @@ public class ProductGui extends JPanel {
         }
 
         // ── Dialog thêm lô ────────────────────────────────────────────────────
-        // [FIX] Toàn bộ method này là mới
         private void openAddLotDialog() {
             JDialog dlg = new JDialog(this, "Thêm lô hàng", true);
             dlg.setSize(420, 340);
@@ -951,6 +1039,7 @@ public class ProductGui extends JPanel {
                 String priceStr = tfPrice.getText().trim();
                 String hsdStr   = tfHsd.getText().trim();
 
+                // ── Kiểm tra bắt buộc ────────────────────────────────────────
                 if (batch.isEmpty() || qtyStr.isEmpty()
                         || priceStr.isEmpty() || hsdStr.isEmpty()) {
                     JOptionPane.showMessageDialog(dlg,
@@ -964,25 +1053,38 @@ public class ProductGui extends JPanel {
                 BigDecimal price;
                 LocalDateTime hsd;
 
+                // ── Validate số lô ────────────────────────────────────────────
                 try {
                     batchNumber = Integer.parseInt(batch);
                 } catch (NumberFormatException ex) {
                     JOptionPane.showMessageDialog(dlg,
                             "Số lô phải là số nguyên.",
-                            "Lỗi", JOptionPane.ERROR_MESSAGE);
+                            "Lỗi định dạng", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
 
+                // [VALIDATE] Không cho trùng batchNumber trong cùng lần nhập
+                boolean dupBatch = lotRows.stream()
+                        .anyMatch(lr -> lr.batchNumber() == batchNumber);
+                if (dupBatch) {
+                    JOptionPane.showMessageDialog(dlg,
+                            "Số lô " + batchNumber + " đã tồn tại trong danh sách.\nVui lòng nhập số lô khác.",
+                            "Trùng số lô", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                // ── Validate số lượng ─────────────────────────────────────────
                 try {
                     qty = Integer.parseInt(qtyStr);
                     if (qty <= 0) throw new NumberFormatException();
                 } catch (NumberFormatException ex) {
                     JOptionPane.showMessageDialog(dlg,
-                            "Số lượng phải là số nguyên dương.",
-                            "Lỗi", JOptionPane.ERROR_MESSAGE);
+                            "Số lượng phải là số nguyên dương (> 0).",
+                            "Lỗi định dạng", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
 
+                // ── Validate giá nhập ─────────────────────────────────────────
                 try {
                     price = new BigDecimal(priceStr.replace(",", ""));
                     if (price.compareTo(BigDecimal.ZERO) < 0)
@@ -990,17 +1092,27 @@ public class ProductGui extends JPanel {
                 } catch (NumberFormatException ex) {
                     JOptionPane.showMessageDialog(dlg,
                             "Giá nhập phải là số hợp lệ (≥ 0).",
-                            "Lỗi", JOptionPane.ERROR_MESSAGE);
+                            "Lỗi định dạng", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
 
+                // ── Validate HSD ──────────────────────────────────────────────
                 try {
                     hsd = LocalDate.parse(hsdStr, HSD_FMT).atStartOfDay();
                 } catch (DateTimeParseException ex) {
                     JOptionPane.showMessageDialog(dlg,
                             "Hạn sử dụng không đúng định dạng dd/MM/yyyy.",
-                            "Lỗi", JOptionPane.ERROR_MESSAGE);
+                            "Lỗi định dạng", JOptionPane.ERROR_MESSAGE);
                     return;
+                }
+
+                // [VALIDATE] Cảnh báo nếu HSD đã qua (không chặn cứng, cho phép nhập lô hỏng/hết hạn)
+                if (hsd.isBefore(LocalDateTime.now())) {
+                    int ok = JOptionPane.showConfirmDialog(dlg,
+                            "Hạn sử dụng đã qua ngày hôm nay.\nBạn vẫn muốn thêm lô này?",
+                            "Cảnh báo HSD", JOptionPane.YES_NO_OPTION,
+                            JOptionPane.WARNING_MESSAGE);
+                    if (ok != JOptionPane.YES_OPTION) return;
                 }
 
                 LotStatus status = switch (cbStatus.getSelectedIndex()) {
@@ -1031,8 +1143,8 @@ public class ProductGui extends JPanel {
         private void openAddUomDialog() {
             if (measurements.isEmpty()) {
                 JOptionPane.showMessageDialog(this,
-                        "Chưa tải được danh sách đơn vị đo lường.",
-                        "Thông báo", JOptionPane.WARNING_MESSAGE);
+                        "Chưa tải được danh sách đơn vị đo lường.\nVui lòng thử lại sau.",
+                        "Chưa có dữ liệu", JOptionPane.WARNING_MESSAGE);
                 return;
             }
 
@@ -1103,30 +1215,67 @@ public class ProductGui extends JPanel {
 
                 String priceStr = tfPrice.getText().trim();
                 String rateStr  = tfRate.getText().trim();
+
                 if (priceStr.isEmpty() || rateStr.isEmpty()) {
                     JOptionPane.showMessageDialog(dlg,
                             "Vui lòng nhập đầy đủ thông tin.",
-                            "Lỗi", JOptionPane.ERROR_MESSAGE);
+                            "Thiếu thông tin", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+
+                BigDecimal price;
+                BigDecimal rate;
+                try {
+                    price = new BigDecimal(priceStr.replace(",", ""));
+                    if (price.compareTo(BigDecimal.ZERO) < 0) throw new NumberFormatException();
+                } catch (NumberFormatException ex) {
+                    JOptionPane.showMessageDialog(dlg,
+                            "Giá bán phải là số hợp lệ (≥ 0).",
+                            "Lỗi định dạng", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
                 try {
-                    BigDecimal price = new BigDecimal(priceStr);
-                    BigDecimal rate  = new BigDecimal(rateStr);
-                    boolean isBase   = chkBase.isSelected();
-
-                    uomRows.add(new UomRowData(meas, isBase, price, rate));
-                    mdlUom.addRow(new Object[]{
-                            meas.getName(),
-                            isBase ? "✔ Gốc" : "",
-                            String.format("%,.0f", price) + " đ",
-                            rate.toPlainString()
-                    });
-                    dlg.dispose();
+                    rate = new BigDecimal(rateStr);
+                    if (rate.compareTo(BigDecimal.ZERO) <= 0) throw new NumberFormatException();
                 } catch (NumberFormatException ex) {
                     JOptionPane.showMessageDialog(dlg,
-                            "Giá bán và tỷ lệ phải là số hợp lệ.",
-                            "Lỗi", JOptionPane.ERROR_MESSAGE);
+                            "Tỷ lệ quy đổi phải là số dương (> 0).",
+                            "Lỗi định dạng", JOptionPane.ERROR_MESSAGE);
+                    return;
                 }
+
+                boolean isBase = chkBase.isSelected();
+
+                // [VALIDATE] Không cho trùng đơn vị đo lường trong cùng sản phẩm
+                boolean dupMeas = uomRows.stream()
+                        .anyMatch(row -> row.measurement() != null
+                                && row.measurement().getId().equals(meas.getId()));
+                if (dupMeas) {
+                    JOptionPane.showMessageDialog(dlg,
+                            "Đơn vị \"" + meas.getName() + "\" đã tồn tại trong danh sách.\nVui lòng chọn đơn vị khác.",
+                            "Trùng đơn vị", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                // [VALIDATE] Nếu chọn là đơn vị gốc nhưng đã có rồi → cảnh báo
+                if (isBase) {
+                    boolean alreadyHasBase = uomRows.stream().anyMatch(UomRowData::baseUnit);
+                    if (alreadyHasBase) {
+                        JOptionPane.showMessageDialog(dlg,
+                                "Đã có một đơn vị gốc trong danh sách.\nMỗi sản phẩm chỉ được có một đơn vị gốc duy nhất.",
+                                "Trùng đơn vị gốc", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+                }
+
+                uomRows.add(new UomRowData(meas, isBase, price, rate));
+                mdlUom.addRow(new Object[]{
+                        meas.getName(),
+                        isBase ? "✔ Gốc" : "",
+                        String.format("%,.0f", price) + " đ",
+                        rate.toPlainString()
+                });
+                dlg.dispose();
             });
 
             foot.add(btnOk);
@@ -1135,17 +1284,26 @@ public class ProductGui extends JPanel {
             dlg.setVisible(true);
         }
 
-        // ── Footer buttons ────────────────────────────────────────────────────
+        // ── Footer buttons ─────────────────────────────────────────────────────
         private JPanel buildFooterButtons() {
             JPanel footer = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
             footer.setBackground(D_BG);
             footer.setBorder(new MatteBorder(1, 0, 0, 0, D_BORDER));
 
             JButton btnCancel = dlgBtn("Hủy", D_DANGER);
-            // [FIX] Giữ tham chiếu trực tiếp thay vì cast lấy qua index
             btnSave = dlgBtn(editTarget == null ? "Lưu sản phẩm" : "Cập nhật", D_SUCCESS);
 
-            btnCancel.addActionListener(e -> dispose());
+            // [GUARD] Nút Hủy cũng kiểm tra trạng thái lưu
+            btnCancel.addActionListener(e -> {
+                if (isSaving) {
+                    JOptionPane.showMessageDialog(this,
+                            "Đang lưu dữ liệu, không thể đóng lúc này.",
+                            "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+                    return;
+                }
+                dispose();
+            });
+
             btnSave.addActionListener(e -> saveProduct());
 
             footer.add(btnCancel);
@@ -1153,7 +1311,7 @@ public class ProductGui extends JPanel {
             return footer;
         }
 
-        // ── Fill form when editing ─────────────────────────────────────────────
+        // ── Fill form ─────────────────────────────────────────────────────────
         private void fillForm(ProductDto p) {
             tfBarcode.setText(nvl(p.getBarcode()));
             tfName.setText(nvl(p.getName()));
@@ -1194,13 +1352,17 @@ public class ProductGui extends JPanel {
 
         // ── Save ──────────────────────────────────────────────────────────────
         private void saveProduct() {
+            // [GUARD] Không cho lưu nhiều lần cùng lúc
+            if (isSaving) return;
+
+            // ── Validate Tab 1: Thông tin cơ bản ─────────────────────────────
             if (tfBarcode.getText().isBlank() || tfName.getText().isBlank()
                     || tfShortName.getText().isBlank()
                     || tfManufacturer.getText().isBlank()
                     || tfIngredients.getText().isBlank()
                     || tfVat.getText().isBlank()) {
                 JOptionPane.showMessageDialog(this,
-                        "Vui lòng điền đầy đủ các trường bắt buộc (*).",
+                        "Vui lòng điền đầy đủ các trường bắt buộc (*) ở tab \"Thông tin cơ bản\".",
                         "Thiếu thông tin", JOptionPane.WARNING_MESSAGE);
                 return;
             }
@@ -1208,12 +1370,70 @@ public class ProductGui extends JPanel {
             BigDecimal vat;
             try {
                 vat = new BigDecimal(tfVat.getText().trim());
+                if (vat.compareTo(BigDecimal.ZERO) < 0
+                        || vat.compareTo(new BigDecimal("100")) > 0) {
+                    JOptionPane.showMessageDialog(this,
+                            "VAT phải nằm trong khoảng 0 – 100 (%).",
+                            "Lỗi giá trị", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
             } catch (NumberFormatException ex) {
                 JOptionPane.showMessageDialog(this,
-                        "VAT phải là số hợp lệ.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                        "VAT phải là số hợp lệ (ví dụ: 10).",
+                        "Lỗi định dạng", JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
+            // [VALIDATE] Kiểm tra trùng mã vạch với các sản phẩm khác
+            String barcode = tfBarcode.getText().trim();
+            boolean dupBarcode = allProducts.stream()
+                    .filter(p -> editTarget == null || !p.getId().equals(editTarget.getId()))
+                    .anyMatch(p -> barcode.equalsIgnoreCase(p.getBarcode()));
+            if (dupBarcode) {
+                JOptionPane.showMessageDialog(this,
+                        "Mã vạch \"" + barcode + "\" đã được sử dụng bởi sản phẩm khác.\nVui lòng nhập mã vạch khác.",
+                        "Trùng mã vạch", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            // ── Validate Tab 2: Đơn vị tính ──────────────────────────────────
+            if (uomRows.isEmpty()) {
+                JOptionPane.showMessageDialog(this,
+                        "Sản phẩm phải có ít nhất một đơn vị tính.\nVui lòng thêm đơn vị tính ở tab \"Đơn vị tính\".",
+                        "Thiếu đơn vị tính", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            long baseCount = uomRows.stream().filter(UomRowData::baseUnit).count();
+            if (baseCount == 0) {
+                JOptionPane.showMessageDialog(this,
+                        "Phải có đúng một đơn vị tính là đơn vị gốc (✔ Gốc).\nVui lòng kiểm tra tab \"Đơn vị tính\".",
+                        "Thiếu đơn vị gốc", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            // baseCount > 1 không xảy ra vì đã chặn từ openAddUomDialog,
+            // nhưng giữ lại để phòng trường hợp fillForm() load dữ liệu lỗi từ server
+            if (baseCount > 1) {
+                JOptionPane.showMessageDialog(this,
+                        "Chỉ được có đúng một đơn vị gốc. Hiện có " + baseCount + " đơn vị được đánh dấu là gốc.\nVui lòng kiểm tra lại.",
+                        "Dữ liệu không hợp lệ", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            // [CONFIRM] Xác nhận trước khi gửi lên server
+            String action = editTarget == null ? "thêm sản phẩm mới" : "cập nhật sản phẩm này";
+            int confirm = JOptionPane.showConfirmDialog(this,
+                    "Bạn có chắc chắn muốn " + action + "?\n\n"
+                            + "Tên: " + tfName.getText().trim() + "\n"
+                            + "Mã vạch: " + barcode + "\n"
+                            + "Số đơn vị tính: " + uomRows.size() + "\n"
+                            + "Số lô hàng sẽ thêm: " + lotRows.size(),
+                    "Xác nhận lưu",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.QUESTION_MESSAGE);
+            if (confirm != JOptionPane.YES_OPTION) return;
+
+            // ── Build DTO ─────────────────────────────────────────────────────
             ProductCategory cat = switch (cbCategory.getSelectedIndex()) {
                 case 1  -> ProductCategory.OTC;
                 case 2  -> ProductCategory.ETC;
@@ -1233,7 +1453,7 @@ public class ProductGui extends JPanel {
 
             ProductDto dto = ProductDto.builder()
                     .id(editTarget != null ? editTarget.getId() : null)
-                    .barcode(tfBarcode.getText().trim())
+                    .barcode(barcode)
                     .name(tfName.getText().trim())
                     .shortName(tfShortName.getText().trim())
                     .manufacturer(tfManufacturer.getText().trim())
@@ -1253,9 +1473,8 @@ public class ProductGui extends JPanel {
             CommandType cmd = editTarget == null
                     ? CommandType.PRODUCT_CREATE : CommandType.PRODUCT_UPDATE;
 
-            // [FIX] Dùng field btnSave trực tiếp, không cast qua index nữa
-            btnSave.setEnabled(false);
-            btnSave.setText("Đang lưu...");
+            // [GUARD] Đánh dấu đang lưu, disable nút
+            setSaving(true);
 
             new SwingWorker<Response, Void>() {
                 @Override protected Response doInBackground() throws Exception {
@@ -1266,14 +1485,14 @@ public class ProductGui extends JPanel {
                     try {
                         Response resp = get();
                         if (resp != null && resp.getData() instanceof ProductDto saved) {
-                            // [FIX] Sau khi lưu sản phẩm thành công, gửi các lô hàng
                             saveLots(saved);
                         } else {
                             SwingUtilities.invokeLater(() -> {
+                                String msg = resp != null ? resp.getMessage() : "Không có phản hồi từ server.";
                                 JOptionPane.showMessageDialog(ProductFormDialog.this,
-                                        "Lưu thất bại. Kiểm tra lại dữ liệu.",
+                                        "Lưu thất bại: " + msg,
                                         "Lỗi", JOptionPane.ERROR_MESSAGE);
-                                resetSaveButton();
+                                setSaving(false);
                             });
                         }
                     } catch (Exception ex) {
@@ -1281,20 +1500,16 @@ public class ProductGui extends JPanel {
                             JOptionPane.showMessageDialog(ProductFormDialog.this,
                                     "Lỗi kết nối: " + ex.getMessage(),
                                     "Lỗi", JOptionPane.ERROR_MESSAGE);
-                            resetSaveButton();
+                            setSaving(false);
                         });
                     }
                 }
             }.execute();
         }
 
-        /**
-         * [FIX] Gửi từng lô hàng lên server sau khi sản phẩm đã được tạo/cập nhật.
-         * Gửi tuần tự để tránh race condition; lỗi lô nào sẽ báo riêng lô đó.
-         */
+        /** Gửi các lô hàng tuần tự sau khi product đã được lưu thành công. */
         private void saveLots(ProductDto savedProduct) {
             if (lotRows.isEmpty()) {
-                // Không có lô nào → đóng dialog và thông báo thành công
                 SwingUtilities.invokeLater(() -> {
                     onSaved.accept(savedProduct);
                     dispose();
@@ -1302,7 +1517,6 @@ public class ProductGui extends JPanel {
                 return;
             }
 
-            // Cập nhật text nút để người dùng biết đang lưu lô
             SwingUtilities.invokeLater(() ->
                     btnSave.setText("Đang lưu lô... (0/" + lotRows.size() + ")"));
 
@@ -1327,8 +1541,7 @@ public class ProductGui extends JPanel {
                                 .status(lr.status())
                                 .build();
                         try {
-                            Response r = networkService.send(
-                                    CommandType.LOT_CREATE, lotDto);
+                            Response r = networkService.send(CommandType.LOT_CREATE, lotDto);
                             if (r == null || !r.isSuccess()) {
                                 errors.add("Lô #" + lr.batchNumber() + ": "
                                         + (r != null ? r.getMessage() : "Không phản hồi"));
@@ -1359,16 +1572,11 @@ public class ProductGui extends JPanel {
                             JOptionPane.showMessageDialog(ProductFormDialog.this,
                                     "Lỗi khi lưu lô hàng: " + ex.getMessage(),
                                     "Lỗi", JOptionPane.ERROR_MESSAGE);
-                            resetSaveButton();
+                            setSaving(false);
                         });
                     }
                 }
             }.execute();
-        }
-
-        private void resetSaveButton() {
-            btnSave.setEnabled(true);
-            btnSave.setText(editTarget == null ? "Lưu sản phẩm" : "Cập nhật");
         }
 
         // ── Load measurements ─────────────────────────────────────────────────
@@ -1389,6 +1597,22 @@ public class ProductGui extends JPanel {
                     } catch (Exception ignored) {}
                 }
             }.execute();
+        }
+
+        // ── Guard helpers ─────────────────────────────────────────────────────
+        /**
+         * [GUARD] Bật/tắt trạng thái đang lưu:
+         * - Disable toàn bộ nút khi đang gửi lên server
+         * - Cập nhật text btnSave
+         */
+        private void setSaving(boolean saving) {
+            isSaving = saving;
+            btnSave.setEnabled(!saving);
+            if (!saving) {
+                btnSave.setText(editTarget == null ? "Lưu sản phẩm" : "Cập nhật");
+            } else {
+                btnSave.setText("Đang lưu...");
+            }
         }
 
         // ── Helpers ───────────────────────────────────────────────────────────
@@ -1482,7 +1706,6 @@ public class ProductGui extends JPanel {
         record UomRowData(MeasurementDto measurement, boolean baseUnit,
                           BigDecimal price, BigDecimal rate) {}
 
-        // [FIX] Record mới cho dữ liệu lô hàng — batchNumber là int theo LotDto
         record LotRowData(int batchNumber, int quantity,
                           BigDecimal rawPrice, LocalDateTime expiryDate,
                           LotStatus status) {}
