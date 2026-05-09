@@ -207,7 +207,7 @@ public class MainMenuGui extends JFrame implements ActionListener {
         contentArea.add(buildPlaceholder("Đơn hàng"),  "sales");
         contentArea.add(buildPlaceholder("Khuyến mại"), "promotion");
         contentArea.add(new StatisticalGui(networkService),  "statistics");
-        contentArea.add(buildPlaceholder("Nhân viên"), "staff");
+        contentArea.add(new StaffGui(networkService), "staff");
 
         // Hiển thị home mặc định
         cardLayout.show(contentArea, "home");

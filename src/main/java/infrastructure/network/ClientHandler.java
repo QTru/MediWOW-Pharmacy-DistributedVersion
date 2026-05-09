@@ -16,6 +16,7 @@ import infrastructure.service.implementation.StaffServiceImplementation;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.util.ArrayList;
 
 public class ClientHandler implements Runnable {
     private final Socket socket;
@@ -35,6 +36,8 @@ public class ClientHandler implements Runnable {
                 ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
                 ObjectInputStream  in  = new ObjectInputStream(socket.getInputStream())
         ) {
+            out.flush(); // flush header ngay để client tạo được ObjectInputStream
+
             while (true) {
                 Request request = (Request) in.readObject();
                 System.out.println("[Server] Nhận: " + request.getCommandType());
@@ -43,7 +46,7 @@ public class ClientHandler implements Runnable {
 
                 out.writeObject(response);
                 out.flush();
-                out.reset(); // ← quan trọng: tránh cache object cũ trong stream
+                out.reset(); // tránh cache object cũ trong stream
             }
         } catch (Exception e) {
             System.out.println("Client ngắt kết nối: " + socket.getInetAddress());
@@ -60,10 +63,10 @@ public class ClientHandler implements Runnable {
 
             // ── Staff ─────────────────────────────────────────────────────────
             case STAFF_LOGIN      -> handleStaffLogin(request);
-            case STAFF_CREATE     -> notImplemented();
-            case STAFF_UPDATE     -> notImplemented();
-            case STAFF_FIND_BY_ID -> notImplemented();
-            case STAFF_LOAD_ALL   -> notImplemented();
+            case STAFF_CREATE     -> handleStaffCreate(request);
+            case STAFF_UPDATE     -> handleStaffUpdate(request);
+            case STAFF_FIND_BY_ID -> handleStaffFindById(request);
+            case STAFF_LOAD_ALL   -> handleStaffLoadAll();
 
             // ── Product ───────────────────────────────────────────────────────
             case PRODUCT_CREATE     -> handleProductCreate(request);
@@ -109,6 +112,63 @@ public class ClientHandler implements Runnable {
         }
     }
 
+    private Response handleStaffCreate(Request request) {
+        try {
+            StaffDto dto = (StaffDto) request.getData();
+            return Response.builder()
+                    .success(true)
+                    .data(staffService.create(dto))
+                    .message("Tạo nhân viên thành công.")
+                    .build();
+        } catch (IllegalArgumentException e) {
+            return Response.builder().success(false).message(e.getMessage()).build();
+        } catch (Exception e) {
+            return errorResponse(e);
+        }
+    }
+
+    private Response handleStaffUpdate(Request request) {
+        try {
+            StaffDto dto = (StaffDto) request.getData();
+            return Response.builder()
+                    .success(true)
+                    .data(staffService.update(dto))
+                    .message("Cập nhật nhân viên thành công.")
+                    .build();
+        } catch (IllegalArgumentException e) {
+            return Response.builder().success(false).message(e.getMessage()).build();
+        } catch (Exception e) {
+            return errorResponse(e);
+        }
+    }
+
+    private Response handleStaffFindById(Request request) {
+        try {
+            String id = (String) request.getData();
+            return Response.builder()
+                    .success(true)
+                    .data(staffService.findById(id))
+                    .message("Tìm nhân viên thành công.")
+                    .build();
+        } catch (IllegalArgumentException e) {
+            return Response.builder().success(false).message(e.getMessage()).build();
+        } catch (Exception e) {
+            return errorResponse(e);
+        }
+    }
+
+    private Response handleStaffLoadAll() {
+        try {
+            return Response.builder()
+                    .success(true)
+                    .data(new ArrayList<>(staffService.loadAll())) // ArrayList để Serializable
+                    .message("Tải danh sách nhân viên thành công.")
+                    .build();
+        } catch (Exception e) {
+            return errorResponse(e);
+        }
+    }
+
     // ═══════════════════════════════════════════════════════════════════════════
     // Product
     // ═══════════════════════════════════════════════════════════════════════════
@@ -116,7 +176,7 @@ public class ClientHandler implements Runnable {
         try {
             return Response.builder()
                     .success(true)
-                    .data(productService.loadAll())
+                    .data(new ArrayList<>(productService.loadAll())) // ArrayList để Serializable
                     .message("Tải danh sách sản phẩm thành công.")
                     .build();
         } catch (Exception e) {
@@ -176,7 +236,7 @@ public class ClientHandler implements Runnable {
         try {
             return Response.builder()
                     .success(true)
-                    .data(lotService.loadAll())
+                    .data(new ArrayList<>(lotService.loadAll())) // ArrayList để Serializable
                     .message("Tải danh sách lô hàng thành công.")
                     .build();
         } catch (Exception e) {
@@ -236,7 +296,7 @@ public class ClientHandler implements Runnable {
         try {
             return Response.builder()
                     .success(true)
-                    .data(measurementService.loadAll())
+                    .data(new ArrayList<>(measurementService.loadAll())) // ArrayList để Serializable
                     .message("Tải danh sách đơn vị đo lường thành công.")
                     .build();
         } catch (Exception e) {
