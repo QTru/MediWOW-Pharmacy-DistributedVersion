@@ -71,8 +71,9 @@ public class InvoiceServiceImplementation implements InvoiceService {
             throw new IllegalArgumentException("Payment method cannot be null");
         if (invoiceDto.getCreatorId() == null || invoiceDto.getCreatorId().isBlank())
             throw new IllegalArgumentException("Creator id cannot be null or blank");
-        if (invoiceDto.getShiftId() == null || invoiceDto.getShiftId().isBlank())
-            throw new IllegalArgumentException("Shift id cannot be null or blank");
+        // TODO: Bật lại khi hoàn thiện cơ chế ca
+        // if (invoiceDto.getShiftId() == null || invoiceDto.getShiftId().isBlank())
+        //     throw new IllegalArgumentException("Shift id cannot be null or blank");
         if (invoiceDto.getCustomerPhoneNumber() != null
                 && !invoiceDto.getCustomerPhoneNumber().isBlank()
                 && !isPhoneNumberValid(invoiceDto.getCustomerPhoneNumber()))

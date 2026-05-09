@@ -1182,10 +1182,10 @@ public class SalesInvoiceGui extends JPanel implements
     }
 
     private void processPayment() {
-        if (currentShift == null) {
-            JOptionPane.showMessageDialog(this, "Chưa có ca làm việc đang mở nên chưa thể thanh toán.", "Thiếu ca làm việc", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
+//        if (currentShift == null) {
+//            JOptionPane.showMessageDialog(this, "Chưa có ca làm việc đang mở nên chưa thể thanh toán.", "Thiếu ca làm việc", JOptionPane.WARNING_MESSAGE);
+//            return;
+//        }
         if (invoiceLines.stream().noneMatch(lineState -> !lineState.gift)) {
             JOptionPane.showMessageDialog(this, "Danh sách hóa đơn đang trống.", "Không thể thanh toán", JOptionPane.WARNING_MESSAGE);
             return;
@@ -1277,7 +1277,7 @@ public class SalesInvoiceGui extends JPanel implements
                 .type(InvoiceType.SALE)
                 .creatorId(currentStaff.getId())
                 .creatorFullName(currentStaff.getFullName())
-                .shiftId(currentShift.getId())
+                // TODO: .shiftId(currentShift.getId()) — bật lại khi có ca
                 .prescriptionCode(prescriptionCode.isBlank() ? null : prescriptionCode)
                 .customerPhoneNumber(phoneNumber.isBlank() ? null : phoneNumber)
                 .invoiceLines(lineDtos)

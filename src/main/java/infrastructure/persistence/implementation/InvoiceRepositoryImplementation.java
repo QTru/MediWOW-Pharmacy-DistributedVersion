@@ -22,7 +22,9 @@ public class InvoiceRepositoryImplementation extends AbstractGenericRepositoryIm
     public Invoice create(Invoice invoice) {
         return doInTransaction(em -> {
             invoice.setCreator(em.find(Staff.class, invoice.getCreator().getId()));
-            invoice.setShift(em.find(Shift.class, invoice.getShift().getId()));
+            // TODO: Bật lại khi hoàn thiện cơ chế ca
+            if (invoice.getShift() != null)
+                invoice.setShift(em.find(Shift.class, invoice.getShift().getId()));
 
             if (invoice.getCustomer() != null) {
                 Customer customer = customerRepository.findByPhoneNumber(invoice.getCustomer().getPhoneNumber());
