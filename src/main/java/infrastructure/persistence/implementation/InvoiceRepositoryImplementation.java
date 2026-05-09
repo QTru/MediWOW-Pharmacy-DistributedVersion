@@ -42,7 +42,15 @@ public class InvoiceRepositoryImplementation extends AbstractGenericRepositoryIm
 
                 invoiceLine.setLotAllocations(invoiceLine.getLotAllocations().stream().map(lotAllocation -> {
                     lotAllocation.setInvoiceLine(invoiceLine);
-                    lotAllocation.setLot(em.find(Lot.class, lotAllocation.getLot().getId()));  // ← Also change to find
+                    Lot lot = em.find(Lot.class, lotAllocation.getLot().getId());
+                    if (lot == null) {
+                        throw new IllegalArgumentException("Lot not found: " + lotAllocation.getLot().getId());
+                    }
+                    if (lot.getQuantity() < lotAllocation.getQuantity()) {
+                        throw new IllegalArgumentException("Insufficient quantity in lot: " + lot.getId());
+                    }
+                    lot.setQuantity(lot.getQuantity() - lotAllocation.getQuantity());
+                    lotAllocation.setLot(lot);
                     return lotAllocation;
                 }).toList());
 

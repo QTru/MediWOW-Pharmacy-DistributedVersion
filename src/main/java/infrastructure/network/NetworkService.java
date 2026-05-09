@@ -43,6 +43,7 @@ public class NetworkService {
                 .commandType(commandType)
                 .data(data)
                 .build();
+        out.reset(); // prevent ObjectOutputStream from caching stale object references
         out.writeObject(request);
         out.flush();
         out.reset(); // tránh cache object cũ trong stream

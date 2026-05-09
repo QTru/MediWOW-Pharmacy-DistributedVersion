@@ -4,14 +4,26 @@ import core.dto.LotDto;
 import core.dto.MeasurementDto;
 import core.dto.ProductDto;
 import core.dto.StaffDto;
+import core.dto.CustomerDto;
+import core.dto.InvoiceDto;
+import core.dto.PromotionDto;
+import core.dto.ShiftDto;
+import infrastructure.service.CustomerService;
+import infrastructure.service.InvoiceService;
 import infrastructure.service.LotService;
 import infrastructure.service.MeasurementService;
 import infrastructure.service.ProductService;
+import infrastructure.service.PromotionService;
 import infrastructure.service.StaffService;
+import infrastructure.service.ShiftService;
+import infrastructure.service.implementation.CustomerServiceImplementation;
+import infrastructure.service.implementation.InvoiceServiceImplementation;
 import infrastructure.service.implementation.LotServiceImplementation;
 import infrastructure.service.implementation.MeasurementServiceImplementation;
 import infrastructure.service.implementation.ProductServiceImplementation;
+import infrastructure.service.implementation.PromotionServiceImplementation;
 import infrastructure.service.implementation.StaffServiceImplementation;
+import infrastructure.service.implementation.ShiftServiceImplementation;
 
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -25,6 +37,10 @@ public class ClientHandler implements Runnable {
     private final ProductService     productService     = new ProductServiceImplementation();
     private final LotService         lotService         = new LotServiceImplementation();
     private final MeasurementService measurementService = new MeasurementServiceImplementation();
+    private final InvoiceService     invoiceService     = new InvoiceServiceImplementation();
+    private final ShiftService       shiftService       = new ShiftServiceImplementation();
+    private final CustomerService    customerService    = new CustomerServiceImplementation();
+    private final PromotionService   promotionService   = new PromotionServiceImplementation();
 
     public ClientHandler(Socket socket) {
         this.socket = socket;
@@ -85,11 +101,24 @@ public class ClientHandler implements Runnable {
             case MEASUREMENT_LOAD_ALL   -> handleMeasurementLoadAll();
 
             // ── Chưa implement ────────────────────────────────────────────────
-            case INVOICE_CREATE, INVOICE_FIND_BY_ID, INVOICE_LOAD_ALL,
-                 SHIFT_CREATE, SHIFT_UPDATE, SHIFT_FIND_BY_ID, SHIFT_GET_ACTIVE,
-                 CUSTOMER_CREATE, CUSTOMER_UPDATE, CUSTOMER_FIND_BY_ID, CUSTOMER_FIND_BY_PHONE,
-                 PROMOTION_CREATE, PROMOTION_UPDATE, PROMOTION_FIND_BY_ID, PROMOTION_LOAD_ALL
-                    -> notImplemented();
+            case INVOICE_CREATE     -> handleInvoiceCreate(request);
+            case INVOICE_FIND_BY_ID -> notImplemented();
+            case INVOICE_LOAD_ALL   -> notImplemented();
+
+            case SHIFT_CREATE     -> notImplemented();
+            case SHIFT_UPDATE     -> notImplemented();
+            case SHIFT_FIND_BY_ID -> notImplemented();
+            case SHIFT_GET_ACTIVE -> handleShiftGetActive(request);
+
+            case CUSTOMER_CREATE        -> notImplemented();
+            case CUSTOMER_UPDATE        -> notImplemented();
+            case CUSTOMER_FIND_BY_ID    -> notImplemented();
+            case CUSTOMER_FIND_BY_PHONE -> handleCustomerFindByPhone(request);
+
+            case PROMOTION_CREATE     -> notImplemented();
+            case PROMOTION_UPDATE     -> notImplemented();
+            case PROMOTION_FIND_BY_ID -> notImplemented();
+            case PROMOTION_LOAD_ALL   -> handlePromotionLoadAll();
         };
     }
 
@@ -314,6 +343,79 @@ public class ClientHandler implements Runnable {
                     .build();
         } catch (IllegalArgumentException e) {
             return Response.builder().success(false).message(e.getMessage()).build();
+        } catch (Exception e) {
+            return errorResponse(e);
+        }
+    }
+
+    // ═════════════════════════════════════════════════════════════════════════════════════
+    // Invoice
+    // ═════════════════════════════════════════════════════════════════════════════════════
+    private Response handleInvoiceCreate(Request request) {
+        try {
+            InvoiceDto dto = (InvoiceDto) request.getData();
+            return Response.builder()
+                    .success(true)
+                    .data(invoiceService.create(dto))
+                    .message("Tạo hóa đơn thành công.")
+                    .build();
+        } catch (IllegalArgumentException e) {
+            return Response.builder().success(false).message(e.getMessage()).build();
+        } catch (Exception e) {
+            return errorResponse(e);
+        }
+    }
+
+    // ═════════════════════════════════════════════════════════════════════════════════════
+    // Shift
+    // ═════════════════════════════════════════════════════════════════════════════════════
+    private Response handleShiftGetActive(Request request) {
+        try {
+            String workStation = (String) request.getData();
+            ShiftDto shiftDto = shiftService.findActiveByWorkStation(workStation);
+            return Response.builder()
+                    .success(true)
+                    .data(shiftDto)
+                    .message(shiftDto == null
+                            ? "Không có ca làm việc đang mở trên máy này."
+                            : "Lấy ca làm việc hiện tại thành công.")
+                    .build();
+        } catch (IllegalArgumentException e) {
+            return Response.builder().success(false).message(e.getMessage()).build();
+        } catch (Exception e) {
+            return errorResponse(e);
+        }
+    }
+
+    // ═════════════════════════════════════════════════════════════════════════════════════
+    // Customer
+    // ═════════════════════════════════════════════════════════════════════════════════════
+    private Response handleCustomerFindByPhone(Request request) {
+        try {
+            String phoneNumber = (String) request.getData();
+            CustomerDto customerDto = customerService.findByPhoneNumber(phoneNumber);
+            return Response.builder()
+                    .success(true)
+                    .data(customerDto)
+                    .message("Tìm khách hàng theo số điện thoại thành công.")
+                    .build();
+        } catch (IllegalArgumentException e) {
+            return Response.builder().success(false).message(e.getMessage()).build();
+        } catch (Exception e) {
+            return errorResponse(e);
+        }
+    }
+
+    // ═════════════════════════════════════════════════════════════════════════════════════
+    // Promotion
+    // ═════════════════════════════════════════════════════════════════════════════════════
+    private Response handlePromotionLoadAll() {
+        try {
+            return Response.builder()
+                    .success(true)
+                    .data(promotionService.loadAll())
+                    .message("Tải danh sách khuyến mãi thành công.")
+                    .build();
         } catch (Exception e) {
             return errorResponse(e);
         }

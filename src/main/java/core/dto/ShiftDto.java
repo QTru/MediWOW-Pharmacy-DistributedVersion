@@ -4,6 +4,7 @@ import core.entities.enums.Role;
 import core.entities.enums.ShiftStatus;
 import lombok.*;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -13,7 +14,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @ToString
 @Builder
-public class ShiftDto {
+public class ShiftDto implements Serializable {
     private String id;
     private String staffId;
     private String staffUsername;

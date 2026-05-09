@@ -2,6 +2,7 @@ package core.dto;
 
 import lombok.*;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
 @Getter
@@ -10,7 +11,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @ToString
 @Builder
-public class CustomerDto {
+public class CustomerDto implements Serializable {
     private String id;
     private String name;
     private String phoneNumber;
