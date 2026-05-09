@@ -26,7 +26,6 @@ public class Staff {
     private String id;
     @Column(nullable = false)
     private String username;
-    @JsonIgnore
     @Column(nullable = false)
     private String password;
     @Column(name = "full_name", nullable = false)
