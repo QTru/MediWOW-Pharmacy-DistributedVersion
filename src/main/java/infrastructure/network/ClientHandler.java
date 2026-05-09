@@ -30,6 +30,11 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
 
+import core.dto.PromotionActiveRequestDto;
+import core.dto.PromotionDto;
+import infrastructure.service.PromotionService;
+import infrastructure.service.implementation.PromotionServiceImplementation;
+
 public class ClientHandler implements Runnable {
     private final Socket socket;
 
@@ -41,6 +46,8 @@ public class ClientHandler implements Runnable {
     private final ShiftService       shiftService       = new ShiftServiceImplementation();
     private final CustomerService    customerService    = new CustomerServiceImplementation();
     private final PromotionService   promotionService   = new PromotionServiceImplementation();
+
+    private final PromotionService promotionService = new PromotionServiceImplementation();
 
     public ClientHandler(Socket socket) {
         this.socket = socket;
@@ -115,10 +122,11 @@ public class ClientHandler implements Runnable {
             case CUSTOMER_FIND_BY_ID    -> notImplemented();
             case CUSTOMER_FIND_BY_PHONE -> handleCustomerFindByPhone(request);
 
-            case PROMOTION_CREATE     -> notImplemented();
-            case PROMOTION_UPDATE     -> notImplemented();
-            case PROMOTION_FIND_BY_ID -> notImplemented();
-            case PROMOTION_LOAD_ALL   -> handlePromotionLoadAll();
+            case PROMOTION_CREATE -> handlePromotionCreate(request);
+            case PROMOTION_SET_ACTIVE -> handlePromotionSetActive(request);
+            case PROMOTION_FIND_BY_ID -> handlePromotionFindById(request);
+            case PROMOTION_LOAD_ALL -> handlePromotionLoadAll();
+            case PROMOTION_LOAD_ACTIVE -> handlePromotionLoadActive();
         };
     }
 
@@ -414,8 +422,68 @@ public class ClientHandler implements Runnable {
             return Response.builder()
                     .success(true)
                     .data(promotionService.loadAll())
-                    .message("Tải danh sách khuyến mãi thành công.")
+                    .message("Tải danh sách khuyến mại thành công.")
                     .build();
+        } catch (Exception e) {
+            return errorResponse(e);
+        }
+    }
+
+    private Response handlePromotionLoadActive() {
+        try {
+            return Response.builder()
+                    .success(true)
+                    .data(promotionService.loadActivePromotions())
+                    .message("Tải danh sách khuyến mại đang áp dụng thành công.")
+                    .build();
+        } catch (Exception e) {
+            return errorResponse(e);
+        }
+    }
+
+    private Response handlePromotionFindById(Request request) {
+        try {
+            String id = (String) request.getData();
+
+            return Response.builder()
+                    .success(true)
+                    .data(promotionService.findById(id))
+                    .message("Tìm khuyến mại thành công.")
+                    .build();
+        } catch (IllegalArgumentException e) {
+            return Response.builder().success(false).message(e.getMessage()).build();
+        } catch (Exception e) {
+            return errorResponse(e);
+        }
+    }
+
+    private Response handlePromotionCreate(Request request) {
+        try {
+            PromotionDto dto = (PromotionDto) request.getData();
+
+            return Response.builder()
+                    .success(true)
+                    .data(promotionService.create(dto))
+                    .message("Tạo khuyến mại thành công.")
+                    .build();
+        } catch (IllegalArgumentException e) {
+            return Response.builder().success(false).message(e.getMessage()).build();
+        } catch (Exception e) {
+            return errorResponse(e);
+        }
+    }
+
+    private Response handlePromotionSetActive(Request request) {
+        try {
+            PromotionActiveRequestDto dto = (PromotionActiveRequestDto) request.getData();
+
+            return Response.builder()
+                    .success(true)
+                    .data(promotionService.setActive(dto.getPromotionId(), dto.isActive()))
+                    .message(dto.isActive() ? "Đã bật khuyến mại." : "Đã tắt khuyến mại.")
+                    .build();
+        } catch (IllegalArgumentException e) {
+            return Response.builder().success(false).message(e.getMessage()).build();
         } catch (Exception e) {
             return errorResponse(e);
         }

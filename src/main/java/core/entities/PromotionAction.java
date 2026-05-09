@@ -17,34 +17,48 @@ import java.math.BigDecimal;
 @EqualsAndHashCode(of = "id")
 
 @Entity
-@Table(name = "promotion_actions")
+@Table(
+        name = "promotion_actions",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_promotion_action_order",
+                        columnNames = {"promotion_id", "action_order"}
+                )
+        }
+)
 public class PromotionAction {
     @Id
     @GeneratedId(prefix = "PROMA", numberLength = 6, sequenceName = "seq_promotion_action_id")
     @Column(name = "promotion_action_id", length = 20, nullable = false)
     private String id;
+
     @ManyToOne
     @JoinColumn(name = "promotion_id", nullable = false)
     private Promotion promotion;
+
     @Column(name = "action_order", nullable = false)
     private int actionOrder;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ActionType type;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Target target;
+
     @Column(nullable = false)
     private BigDecimal value;
+
     @ManyToOne
     @JoinColumns({
-            @JoinColumn(name = "uom_product_id",     columnDefinition = "varchar(20)", referencedColumnName = "product_id"),
+            @JoinColumn(name = "uom_product_id", columnDefinition = "varchar(20)", referencedColumnName = "product_id"),
             @JoinColumn(name = "uom_measurement_id", columnDefinition = "varchar(20)", referencedColumnName = "measurement_id")
     })
     private UnitOfMeasure productUom;
 
     @Transient
     public Product getProduct() {
-        return productUom == null? null : productUom.getProduct();
+        return productUom == null ? null : productUom.getProduct();
     }
 }

@@ -167,12 +167,27 @@ public class Mapper {
     public static PromotionActionDto map(PromotionAction promotionAction) {
         PromotionActionDto promotionActionDto = map(promotionAction, PromotionActionDto.class);
 
-        if (promotionAction.getPromotion() != null)
+        if (promotionAction.getPromotion() != null) {
             promotionActionDto.setPromotionId(promotionAction.getPromotion().getId());
+        }
+
         if (promotionAction.getProductUom() != null) {
             promotionActionDto.setProductId(promotionAction.getProductUom().getProduct().getId());
+            promotionActionDto.setProductName(promotionAction.getProductUom().getProduct().getName());
             promotionActionDto.setMeasurementId(promotionAction.getProductUom().getMeasurement().getId());
             promotionActionDto.setMeasurementName(promotionAction.getProductUom().getMeasurement().getName());
+
+            // Include UOM conversion data so the future Invoice module can
+            // compare promotion quantities using base units without reloading Product.
+            promotionActionDto.setProductUomBaseUnitConversionRate(
+                    promotionAction.getProductUom().getBaseUnitConversionRate()
+            );
+            promotionActionDto.setProductUomBaseUnit(
+                    promotionAction.getProductUom().isBaseUnit()
+            );
+            promotionActionDto.setProductUomPrice(
+                    promotionAction.getProductUom().getPrice()
+            );
         }
 
         return promotionActionDto;
@@ -181,13 +196,16 @@ public class Mapper {
     public static PromotionAction map(PromotionActionDto promotionActionDto) {
         PromotionAction promotionAction = map(promotionActionDto, PromotionAction.class);
 
-        if (promotionActionDto.getPromotionId() != null)
+        if (promotionActionDto.getPromotionId() != null) {
             promotionAction.setPromotion(Promotion.builder().id(promotionActionDto.getPromotionId()).build());
-        if (promotionActionDto.getProductId() != null && promotionActionDto.getMeasurementId() != null)
+        }
+
+        if (promotionActionDto.getProductId() != null && promotionActionDto.getMeasurementId() != null) {
             promotionAction.setProductUom(UnitOfMeasure.builder()
                     .product(Product.builder().id(promotionActionDto.getProductId()).build())
                     .measurement(Measurement.builder().id(promotionActionDto.getMeasurementId()).build())
                     .build());
+        }
 
         return promotionAction;
     }
@@ -195,12 +213,27 @@ public class Mapper {
     public static PromotionConditionDto map(PromotionCondition promotionCondition) {
         PromotionConditionDto promotionConditionDto = map(promotionCondition, PromotionConditionDto.class);
 
-        if (promotionCondition.getPromotion() != null)
+        if (promotionCondition.getPromotion() != null) {
             promotionConditionDto.setPromotionId(promotionCondition.getPromotion().getId());
+        }
+
         if (promotionCondition.getProductUom() != null) {
             promotionConditionDto.setProductId(promotionCondition.getProductUom().getProduct().getId());
+            promotionConditionDto.setProductName(promotionCondition.getProductUom().getProduct().getName());
             promotionConditionDto.setMeasurementId(promotionCondition.getProductUom().getMeasurement().getId());
             promotionConditionDto.setMeasurementName(promotionCondition.getProductUom().getMeasurement().getName());
+
+            // Include UOM conversion data so the future Invoice module can
+            // compare promotion quantities using base units without reloading Product.
+            promotionConditionDto.setProductUomBaseUnitConversionRate(
+                    promotionCondition.getProductUom().getBaseUnitConversionRate()
+            );
+            promotionConditionDto.setProductUomBaseUnit(
+                    promotionCondition.getProductUom().isBaseUnit()
+            );
+            promotionConditionDto.setProductUomPrice(
+                    promotionCondition.getProductUom().getPrice()
+            );
         }
 
         return promotionConditionDto;
@@ -209,13 +242,16 @@ public class Mapper {
     public static PromotionCondition map(PromotionConditionDto promotionConditionDto) {
         PromotionCondition promotionCondition = map(promotionConditionDto, PromotionCondition.class);
 
-        if (promotionConditionDto.getPromotionId() != null)
+        if (promotionConditionDto.getPromotionId() != null) {
             promotionCondition.setPromotion(Promotion.builder().id(promotionConditionDto.getPromotionId()).build());
-        if (promotionConditionDto.getProductId() != null && promotionConditionDto.getMeasurementId() != null)
+        }
+
+        if (promotionConditionDto.getProductId() != null && promotionConditionDto.getMeasurementId() != null) {
             promotionCondition.setProductUom(UnitOfMeasure.builder()
                     .product(Product.builder().id(promotionConditionDto.getProductId()).build())
                     .measurement(Measurement.builder().id(promotionConditionDto.getMeasurementId()).build())
                     .build());
+        }
 
         return promotionCondition;
     }
