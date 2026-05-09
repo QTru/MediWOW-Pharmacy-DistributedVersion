@@ -1,5 +1,6 @@
 package core.dto;
 
+import java.io.Serializable;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -10,7 +11,7 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @ToString
 @Builder
-public class UnitOfMeasureDto {
+public class UnitOfMeasureDto implements Serializable {
     private String productId;
     private MeasurementDto measurement;
     private boolean baseUnit;

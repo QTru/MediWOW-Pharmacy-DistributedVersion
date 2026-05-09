@@ -2,6 +2,7 @@ package core.dto;
 
 import core.entities.enums.DosageForm;
 import core.entities.enums.ProductCategory;
+import java.io.Serializable;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -14,7 +15,7 @@ import java.util.List;
 @NoArgsConstructor
 @ToString
 @Builder
-public class ProductDto {
+public class ProductDto implements Serializable {
     private String id;
     private String barcode;
     private ProductCategory category;

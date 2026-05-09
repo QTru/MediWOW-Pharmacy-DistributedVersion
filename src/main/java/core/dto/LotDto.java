@@ -1,6 +1,7 @@
 package core.dto;
 
 import core.entities.enums.LotStatus;
+import java.io.Serializable;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -12,7 +13,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @ToString
 @Builder
-public class LotDto {
+public class LotDto implements Serializable {
     private String id;
     private int batchNumber;
     private String productId;

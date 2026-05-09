@@ -19,11 +19,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 import java.util.function.Consumer;
 
-/**
- * MainMenuGui — Giao diện menu chính (placeholder).
- * Xác nhận đăng nhập thành công, hiển thị thông tin nhân viên,
- * đồng hồ thực và nút đăng xuất.
- */
 public class MainMenuGui extends JFrame implements ActionListener {
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -41,9 +36,10 @@ public class MainMenuGui extends JFrame implements ActionListener {
     private static final Color CLR_BTN_HOVER  = AppColors.MOMO;
     private static final Color CLR_BTN_FG     = AppColors.WHITE;
     private static final Color CLR_BORDER     = AppColors.LIGHT;
+    private static final Color CLR_NAV_ACTIVE = AppColors.PRIMARY;
 
     // ═══════════════════════════════════════════════════════════════════════════
-    // Constants — Fonts (minimum size: 16)
+    // Constants — Fonts
     // ═══════════════════════════════════════════════════════════════════════════
     private static final Font FONT_LOGO       = new Font("Segoe UI", Font.BOLD,  20);
     private static final Font FONT_NAV        = new Font("Segoe UI", Font.BOLD,  16);
@@ -57,8 +53,18 @@ public class MainMenuGui extends JFrame implements ActionListener {
     // ═══════════════════════════════════════════════════════════════════════════
     // Components
     // ═══════════════════════════════════════════════════════════════════════════
-    private JLabel  lblTime;
-    private JButton btnLogout;
+    private JLabel   lblTime;
+    private JButton  btnLogout;
+
+    /**
+     * contentArea dùng CardLayout để chuyển đổi giữa các màn hình.
+     * Mỗi màn hình được add với một key string (ví dụ "home", "product", ...).
+     */
+    private JPanel      contentArea;
+    private CardLayout  cardLayout;
+
+    /** Nút nav đang active (để highlight) */
+    private JButton activeNavBtn;
 
     // ═══════════════════════════════════════════════════════════════════════════
     // State
@@ -91,35 +97,38 @@ public class MainMenuGui extends JFrame implements ActionListener {
         root.add(buildFooter(),  BorderLayout.SOUTH);
     }
 
-    // ── Sidebar (Navigation) ──────────────────────────────────────────────────
+    // ── Sidebar ───────────────────────────────────────────────────────────────
     private JPanel buildSidebar() {
         JPanel sidebar = new JPanel();
         sidebar.setLayout(new BoxLayout(sidebar, BoxLayout.Y_AXIS));
         sidebar.setBackground(CLR_SIDEBAR_BG);
         sidebar.setPreferredSize(new Dimension(200, 0));
 
-        // Navigation buttons at top (placeholder — sẽ implement ở các bước tiếp theo)
         String[][] navItems = {
-            { "Màn hình chính", "home",       "/icons/btn_home.png"      },
-            { "Đơn hàng",       "sales",      "/icons/btn_selling.png"   },
-            { "Sản phẩm",       "product",    "/icons/btn_product.png"   },
-            { "Khuyến mại",     "promotion",  "/icons/btn_promotion.png" },
-            { "Thống kê",       "statistics", "/icons/btn_statistic.png" },
-            { "Nhân viên",      "staff",      "/icons/btn_staff.png"     },
+                { "Màn hình chính", "home",       "/icons/btn_home.png"      },
+                { "Đơn hàng",       "sales",      "/icons/btn_selling.png"   },
+                { "Sản phẩm",       "product",    "/icons/btn_product.png"   },
+                { "Khuyến mại",     "promotion",  "/icons/btn_promotion.png" },
+                { "Thống kê",       "statistics", "/icons/btn_statistic.png" },
+                { "Nhân viên",      "staff",      "/icons/btn_staff.png"     },
         };
 
         boolean isManager = currentStaff.getRole() == Role.MANAGER;
 
         for (String[] item : navItems) {
             if (item[1].equals("staff") && !isManager) continue;
-            sidebar.add(buildNavButton(item[0], item[2]));
+            JButton btn = buildNavButton(item[0], item[1], item[2]);
+            sidebar.add(btn);
+            // Highlight "Màn hình chính" mặc định
+            if (item[1].equals("home")) {
+                setActiveNav(btn);
+            }
         }
 
-        // Spacer — đẩy Đăng xuất xuống cuối
         sidebar.add(Box.createVerticalGlue());
         sidebar.add(buildDivider());
 
-        // ── Logout button ─────────────────────────────────────────────────────
+        // Logout button
         btnLogout = new JButton("Đăng xuất");
         btnLogout.setFont(FONT_NAV);
         btnLogout.setForeground(CLR_BTN_FG);
@@ -148,25 +157,23 @@ public class MainMenuGui extends JFrame implements ActionListener {
         return sidebar;
     }
 
-    // ── Header (Logo + Clock + Greeting) ─────────────────────────────────────
+    // ── Header ────────────────────────────────────────────────────────────────
     private JPanel buildHeader() {
         JPanel header = new JPanel(new BorderLayout());
         header.setBackground(CLR_HEADER_BG);
         header.setBorder(new EmptyBorder(10, 20, 10, 24));
 
-        // ── Left: Logo image + "MediWOW" brand ───────────────────────────────
         JPanel leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
         leftPanel.setBackground(CLR_HEADER_BG);
 
         ImageIcon logoIcon = loadIcon("/images/logo.png");
         if (logoIcon != null) {
-            JLabel lblLogoImg = new JLabel(new ImageIcon(logoIcon.getImage().getScaledInstance(120, 40, Image.SCALE_SMOOTH)));
+            JLabel lblLogoImg = new JLabel(new ImageIcon(
+                    logoIcon.getImage().getScaledInstance(120, 40, Image.SCALE_SMOOTH)));
             leftPanel.add(lblLogoImg);
         }
-
         header.add(leftPanel, BorderLayout.WEST);
 
-        // ── Right: Clock + Greeting ───────────────────────────────────────────
         JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 0));
         rightPanel.setBackground(CLR_HEADER_BG);
 
@@ -184,12 +191,46 @@ public class MainMenuGui extends JFrame implements ActionListener {
         return header;
     }
 
-    // ── Content (Placeholder welcome card) ────────────────────────────────────
+    // ── Content area (CardLayout) ─────────────────────────────────────────────
     private JPanel buildContent() {
+        cardLayout  = new CardLayout();
+        contentArea = new JPanel(cardLayout);
+        contentArea.setBackground(CLR_CONTENT_BG);
+
+        // ── "home" card: welcome screen (giữ nguyên như cũ) ──────────────────
+        contentArea.add(buildHomeCard(), "home");
+
+        // ── "product" card: ProductGui ────────────────────────────────────────
+        contentArea.add(new ProductGui(networkService), "product");
+
+        // ── Các card khác (placeholder) — thêm sau khi implement ─────────────
+        contentArea.add(buildPlaceholder("Đơn hàng"),  "sales");
+        contentArea.add(buildPlaceholder("Khuyến mại"), "promotion");
+        contentArea.add(buildPlaceholder("Thống kê"),  "statistics");
+        contentArea.add(buildPlaceholder("Nhân viên"), "staff");
+
+        // Hiển thị home mặc định
+        cardLayout.show(contentArea, "home");
+
+        return contentArea;
+    }
+
+    /** Màn hình chờ cho các module chưa implement */
+    private JPanel buildPlaceholder(String moduleName) {
+        JPanel ph = new JPanel(new GridBagLayout());
+        ph.setBackground(CLR_CONTENT_BG);
+        JLabel lbl = new JLabel("🚧  Module \"" + moduleName + "\" đang được phát triển.");
+        lbl.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+        lbl.setForeground(CLR_MUTED);
+        ph.add(lbl);
+        return ph;
+    }
+
+    // ── Home card (welcome screen gốc) ────────────────────────────────────────
+    private JPanel buildHomeCard() {
         JPanel content = new JPanel(new GridBagLayout());
         content.setBackground(CLR_CONTENT_BG);
         content.setBorder(new EmptyBorder(40, 40, 40, 40));
-
         content.add(buildWelcomeCard(), new GridBagConstraints());
         return content;
     }
@@ -203,14 +244,12 @@ public class MainMenuGui extends JFrame implements ActionListener {
                 new EmptyBorder(48, 64, 48, 64)
         ));
 
-        // Success icon
         JLabel lblIcon = new JLabel("✅");
         lblIcon.setFont(new Font("Segoe UI", Font.PLAIN, 56));
         lblIcon.setAlignmentX(Component.CENTER_ALIGNMENT);
         card.add(lblIcon);
         card.add(Box.createVerticalStrut(16));
 
-        // Title
         JLabel lblTitle = new JLabel("Đăng nhập thành công!");
         lblTitle.setFont(FONT_TITLE);
         lblTitle.setForeground(CLR_ACCENT);
@@ -218,7 +257,6 @@ public class MainMenuGui extends JFrame implements ActionListener {
         card.add(lblTitle);
         card.add(Box.createVerticalStrut(8));
 
-        // Subtitle
         JLabel lblSubtitle = new JLabel("Hệ thống đang hoạt động. Chào mừng bạn đến với MediWOW.");
         lblSubtitle.setFont(FONT_SUBTITLE);
         lblSubtitle.setForeground(CLR_MUTED);
@@ -226,7 +264,6 @@ public class MainMenuGui extends JFrame implements ActionListener {
         card.add(lblSubtitle);
         card.add(Box.createVerticalStrut(36));
 
-        // ── Info cards ────────────────────────────────────────────────────────
         JPanel infoGrid = new JPanel(new GridLayout(1, 3, 20, 0));
         infoGrid.setBackground(CLR_CARD_BG);
         infoGrid.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -235,14 +272,6 @@ public class MainMenuGui extends JFrame implements ActionListener {
                 currentStaff.getRole() == Role.MANAGER ? "Quản lý" : "Dược sĩ"));
         infoGrid.add(buildInfoCard("Tài khoản", currentStaff.getUsername()));
         card.add(infoGrid);
-        card.add(Box.createVerticalStrut(36));
-
-        // Note
-        JLabel lblNote = new JLabel("Giao diện menu chính sẽ được hoàn thiện ở các bước tiếp theo.");
-        lblNote.setFont(new Font("Segoe UI", Font.ITALIC, 16));
-        lblNote.setForeground(CLR_MUTED);
-        lblNote.setAlignmentX(Component.CENTER_ALIGNMENT);
-        card.add(lblNote);
 
         return card;
     }
@@ -255,20 +284,17 @@ public class MainMenuGui extends JFrame implements ActionListener {
                 BorderFactory.createLineBorder(CLR_BORDER, 1, true),
                 new EmptyBorder(16, 20, 16, 20)
         ));
-
         JLabel lbl = new JLabel(label);
         lbl.setFont(FONT_CARD_LABEL);
         lbl.setForeground(CLR_MUTED);
         lbl.setAlignmentX(Component.CENTER_ALIGNMENT);
         card.add(lbl);
         card.add(Box.createVerticalStrut(6));
-
         JLabel val = new JLabel(value != null ? value : "—");
         val.setFont(FONT_CARD_VALUE);
         val.setForeground(CLR_ACCENT);
         val.setAlignmentX(Component.CENTER_ALIGNMENT);
         card.add(val);
-
         return card;
     }
 
@@ -277,7 +303,6 @@ public class MainMenuGui extends JFrame implements ActionListener {
         JPanel footer = new JPanel(new FlowLayout(FlowLayout.CENTER, 8, 6));
         footer.setBackground(CLR_HEADER_BG);
         footer.setBorder(new MatteBorder(1, 0, 0, 0, CLR_BORDER));
-
         JLabel lblFooter = new JLabel("© 2025 MediWOW — Hệ thống quản lý nhà thuốc");
         lblFooter.setFont(FONT_FOOTER);
         lblFooter.setForeground(CLR_MUTED);
@@ -286,7 +311,7 @@ public class MainMenuGui extends JFrame implements ActionListener {
     }
 
     // ── Nav button factory ────────────────────────────────────────────────────
-    private JButton buildNavButton(String text, String iconPath) {
+    private JButton buildNavButton(String text, String cardKey, String iconPath) {
         JButton btn = new JButton(text);
         btn.setFont(FONT_NAV);
         btn.setForeground(CLR_SIDEBAR_FG);
@@ -297,7 +322,7 @@ public class MainMenuGui extends JFrame implements ActionListener {
         btn.setAlignmentX(Component.CENTER_ALIGNMENT);
         btn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 52));
         btn.setBorder(new EmptyBorder(12, 16, 12, 16));
-        btn.setHorizontalAlignment(SwingConstants.CENTER);
+        btn.setHorizontalAlignment(SwingConstants.LEFT);
         btn.setHorizontalTextPosition(SwingConstants.RIGHT);
         btn.setIconTextGap(10);
 
@@ -306,13 +331,29 @@ public class MainMenuGui extends JFrame implements ActionListener {
             btn.setIcon(scaleIcon(icon, 22));
 
         btn.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override public void mouseEntered(java.awt.event.MouseEvent e) { btn.setBackground(AppColors.PRIMARY); }
-            @Override public void mouseExited(java.awt.event.MouseEvent e)  { btn.setBackground(CLR_SIDEBAR_BG); }
+            @Override public void mouseEntered(java.awt.event.MouseEvent e) {
+                if (btn != activeNavBtn) btn.setBackground(AppColors.PRIMARY);
+            }
+            @Override public void mouseExited(java.awt.event.MouseEvent e) {
+                if (btn != activeNavBtn) btn.setBackground(CLR_SIDEBAR_BG);
+            }
         });
-        // Placeholder — chưa có action (sẽ implement ở các bước tiếp theo)
-        btn.addActionListener(e -> JOptionPane.showMessageDialog(this,
-                "Chức năng đang được phát triển.", "Thông báo", JOptionPane.INFORMATION_MESSAGE));
+
+        btn.addActionListener(e -> {
+            setActiveNav(btn);
+            cardLayout.show(contentArea, cardKey);
+        });
+
         return btn;
+    }
+
+    /** Cập nhật highlight cho nút nav đang active */
+    private void setActiveNav(JButton btn) {
+        if (activeNavBtn != null) {
+            activeNavBtn.setBackground(CLR_SIDEBAR_BG);
+        }
+        activeNavBtn = btn;
+        activeNavBtn.setBackground(CLR_NAV_ACTIVE);
     }
 
     // ── Sidebar divider ───────────────────────────────────────────────────────
@@ -333,10 +374,7 @@ public class MainMenuGui extends JFrame implements ActionListener {
         setLocationRelativeTo(null);
 
         addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosing(WindowEvent e) {
-                confirmLogout();
-            }
+            @Override public void windowClosing(WindowEvent e) { confirmLogout(); }
         });
     }
 
@@ -349,42 +387,32 @@ public class MainMenuGui extends JFrame implements ActionListener {
         timer.start();
     }
 
-    // ── Load image safely (returns null if not found) ─────────────────────────
+    // ── Icon helpers ──────────────────────────────────────────────────────────
     private ImageIcon loadIcon(String path) {
         try {
             var url = getClass().getResource(path);
             return url != null ? new ImageIcon(url) : null;
-        } catch (Exception e) {
-            return null;
-        }
+        } catch (Exception e) { return null; }
     }
 
-    // ── Scale an icon to a square size ───────────────────────────────────────
     private ImageIcon scaleIcon(ImageIcon icon, int size) {
-        Image scaled = icon.getImage().getScaledInstance(size, size, Image.SCALE_SMOOTH);
-        return new ImageIcon(scaled);
+        return new ImageIcon(icon.getImage().getScaledInstance(size, size, Image.SCALE_SMOOTH));
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
-    // Async Helper — SwingWorker
+    // Async Helper
     // ═══════════════════════════════════════════════════════════════════════════
     private void sendAsync(CommandType command, Object data,
                            Consumer<Response> onSuccess, Consumer<Exception> onError) {
-        SwingWorker<Response, Void> worker = new SwingWorker<>() {
-            @Override
-            protected Response doInBackground() throws Exception {
+        new SwingWorker<Response, Void>() {
+            @Override protected Response doInBackground() throws Exception {
                 return networkService.send(command, data);
             }
-            @Override
-            protected void done() {
-                try {
-                    onSuccess.accept(get());
-                } catch (Exception e) {
-                    onError.accept(e);
-                }
+            @Override protected void done() {
+                try { onSuccess.accept(get()); }
+                catch (Exception e) { onError.accept(e); }
             }
-        };
-        worker.execute();
+        }.execute();
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -392,12 +420,9 @@ public class MainMenuGui extends JFrame implements ActionListener {
     // ═══════════════════════════════════════════════════════════════════════════
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (e.getSource() == btnLogout) {
-            confirmLogout();
-        }
+        if (e.getSource() == btnLogout) confirmLogout();
     }
 
-    // ── confirmLogout — hỏi xác nhận rồi quay về LoginGui ────────────────────
     private void confirmLogout() {
         int choice = JOptionPane.showConfirmDialog(
                 this,
@@ -408,10 +433,7 @@ public class MainMenuGui extends JFrame implements ActionListener {
         );
         if (choice == JOptionPane.YES_OPTION) {
             dispose();
-            SwingUtilities.invokeLater(() -> {
-                LoginGui loginGui = new LoginGui(networkService);
-                loginGui.setVisible(true);
-            });
+            SwingUtilities.invokeLater(() -> new LoginGui(networkService).setVisible(true));
         }
     }
 }
