@@ -3,6 +3,7 @@ package core.dto;
 import core.entities.enums.Role;
 import lombok.*;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
 @Getter
@@ -11,7 +12,8 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @ToString
 @Builder
-public class StaffDto {
+public class StaffDto implements Serializable {
+    private static final long serialVersionUID = 1L;
     private String id;
     private String username;
     private String fullName;

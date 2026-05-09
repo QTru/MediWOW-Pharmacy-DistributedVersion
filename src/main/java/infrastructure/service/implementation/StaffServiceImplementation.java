@@ -3,6 +3,7 @@ package infrastructure.service.implementation;
 import core.dto.StaffDto;
 import core.entities.Staff;
 import core.entities.enums.Role;
+import core.utils.PasswordUtil;
 import infrastructure.mapper.Mapper;
 import infrastructure.persistence.StaffRepository;
 import infrastructure.persistence.implementation.StaffRepositoryImplementation;
@@ -15,6 +16,24 @@ public class StaffServiceImplementation implements StaffService {
 
     public StaffServiceImplementation() {
         staffRepository = new StaffRepositoryImplementation();
+    }
+
+    @Override
+    public StaffDto login(String username, String password) {
+        if (username == null || username.isBlank())
+            throw new IllegalArgumentException("Tên đăng nhập không được để trống");
+        if (password == null || password.isBlank())
+            throw new IllegalArgumentException("Mật khẩu không được để trống");
+
+        Staff staff = staffRepository.findByUsername(username);
+        if (staff == null)
+            throw new IllegalArgumentException("Tên đăng nhập hoặc mật khẩu không đúng");
+        if (!PasswordUtil.verifyPassword(password, staff.getPassword()))
+            throw new IllegalArgumentException("Tên đăng nhập hoặc mật khẩu không đúng");
+        if (!staff.isActive())
+            throw new IllegalArgumentException("Tài khoản đã bị vô hiệu hóa. Vui lòng liên hệ quản lý.");
+
+        return Mapper.map(staff, StaffDto.class);
     }
 
     @Override

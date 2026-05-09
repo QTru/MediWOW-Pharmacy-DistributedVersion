@@ -60,6 +60,13 @@ public class MeasurementServiceImplementation implements MeasurementService {
 
     @Override
     public MeasurementDto findByName(String name) {
-        return null;
+        if (name == null || name.isBlank())
+            throw new IllegalArgumentException("Name cannot be null or blank");
+
+        Measurement measurement = measurementRepository.findByName(name);
+        if (measurement == null)
+            throw new IllegalArgumentException("Measurement with name " + name + " not found");
+
+        return Mapper.map(measurement, MeasurementDto.class);
     }
 }
