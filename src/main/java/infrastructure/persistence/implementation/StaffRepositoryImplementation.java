@@ -15,11 +15,28 @@ public class StaffRepositoryImplementation
     }
 
     // ─── Override: hash password before persisting ────────────────────────────
-    @Override
     public Staff create(Staff staff) {
-        staff.setPassword(PasswordUtil.hashPassword("firstPassword"));
+        // Nếu GUI gửi lên password plain-text thì hash nó.
+        // Nếu password null (không được set từ DTO) thì dùng mật khẩu mặc định.
+        String raw = staff.getPassword();
+        if (raw == null || raw.isBlank()) {
+            raw = "firstPassword";
+        }
+        staff.setPassword(PasswordUtil.hashPassword(raw));
         return super.create(staff);
     }
+    public Staff update(Staff staff) {
+        // Khi sửa nhân viên, GUI không gửi password → staff.password = null.
+        // Load password cũ từ DB để tránh mất password.
+        if (staff.getPassword() == null || staff.getPassword().isBlank()) {
+            Staff existing = findById(staff.getId());
+            if (existing != null) {
+                staff.setPassword(existing.getPassword());
+            }
+        }
+        return super.update(staff);
+    }
+
 
     // ─── Query by username ────────────────────────────────────────────────────
     @Override
