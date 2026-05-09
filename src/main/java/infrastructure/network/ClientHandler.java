@@ -47,8 +47,6 @@ public class ClientHandler implements Runnable {
     private final CustomerService    customerService    = new CustomerServiceImplementation();
     private final PromotionService   promotionService   = new PromotionServiceImplementation();
 
-    private final PromotionService promotionService = new PromotionServiceImplementation();
-
     public ClientHandler(Socket socket) {
         this.socket = socket;
     }
