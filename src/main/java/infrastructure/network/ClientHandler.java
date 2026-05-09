@@ -30,6 +30,11 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
 
+import core.dto.PromotionActiveRequestDto;
+import core.dto.PromotionDto;
+import infrastructure.service.PromotionService;
+import infrastructure.service.implementation.PromotionServiceImplementation;
+
 public class ClientHandler implements Runnable {
     private final Socket socket;
 
@@ -95,6 +100,7 @@ public class ClientHandler implements Runnable {
             case LOT_UPDATE     -> handleLotUpdate(request);
             case LOT_FIND_BY_ID -> handleLotFindById(request);
             case LOT_LOAD_ALL   -> handleLotLoadAll();
+            case LOT_FIND_AVAILABLE_BY_PRODUCT_ID -> handleLotFindAvailableByProductId(request);
 
             // ── Measurement ───────────────────────────────────────────────────
             case MEASUREMENT_FIND_BY_ID -> handleMeasurementFindById(request);
@@ -115,10 +121,11 @@ public class ClientHandler implements Runnable {
             case CUSTOMER_FIND_BY_ID    -> notImplemented();
             case CUSTOMER_FIND_BY_PHONE -> handleCustomerFindByPhone(request);
 
-            case PROMOTION_CREATE     -> notImplemented();
-            case PROMOTION_UPDATE     -> notImplemented();
-            case PROMOTION_FIND_BY_ID -> notImplemented();
-            case PROMOTION_LOAD_ALL   -> handlePromotionLoadAll();
+            case PROMOTION_CREATE -> handlePromotionCreate(request);
+            case PROMOTION_SET_ACTIVE -> handlePromotionSetActive(request);
+            case PROMOTION_FIND_BY_ID -> handlePromotionFindById(request);
+            case PROMOTION_LOAD_ALL -> handlePromotionLoadAll();
+            case PROMOTION_LOAD_ACTIVE -> handlePromotionLoadActive();
         };
     }
 
@@ -318,6 +325,25 @@ public class ClientHandler implements Runnable {
         }
     }
 
+    private Response handleLotFindAvailableByProductId(Request request) {
+        try {
+            String productId = (String) request.getData();
+
+            return Response.builder()
+                    .success(true)
+                    .data(lotService.findAvailableLotsByProductId(productId))
+                    .message("Tải danh sách lô hàng khả dụng thành công.")
+                    .build();
+        } catch (IllegalArgumentException e) {
+            return Response.builder()
+                    .success(false)
+                    .message(e.getMessage())
+                    .build();
+        } catch (Exception e) {
+            return errorResponse(e);
+        }
+    }
+
     // ═══════════════════════════════════════════════════════════════════════════
     // Measurement
     // ═══════════════════════════════════════════════════════════════════════════
@@ -414,8 +440,68 @@ public class ClientHandler implements Runnable {
             return Response.builder()
                     .success(true)
                     .data(promotionService.loadAll())
-                    .message("Tải danh sách khuyến mãi thành công.")
+                    .message("Tải danh sách khuyến mại thành công.")
                     .build();
+        } catch (Exception e) {
+            return errorResponse(e);
+        }
+    }
+
+    private Response handlePromotionLoadActive() {
+        try {
+            return Response.builder()
+                    .success(true)
+                    .data(promotionService.loadActivePromotions())
+                    .message("Tải danh sách khuyến mại đang áp dụng thành công.")
+                    .build();
+        } catch (Exception e) {
+            return errorResponse(e);
+        }
+    }
+
+    private Response handlePromotionFindById(Request request) {
+        try {
+            String id = (String) request.getData();
+
+            return Response.builder()
+                    .success(true)
+                    .data(promotionService.findById(id))
+                    .message("Tìm khuyến mại thành công.")
+                    .build();
+        } catch (IllegalArgumentException e) {
+            return Response.builder().success(false).message(e.getMessage()).build();
+        } catch (Exception e) {
+            return errorResponse(e);
+        }
+    }
+
+    private Response handlePromotionCreate(Request request) {
+        try {
+            PromotionDto dto = (PromotionDto) request.getData();
+
+            return Response.builder()
+                    .success(true)
+                    .data(promotionService.create(dto))
+                    .message("Tạo khuyến mại thành công.")
+                    .build();
+        } catch (IllegalArgumentException e) {
+            return Response.builder().success(false).message(e.getMessage()).build();
+        } catch (Exception e) {
+            return errorResponse(e);
+        }
+    }
+
+    private Response handlePromotionSetActive(Request request) {
+        try {
+            PromotionActiveRequestDto dto = (PromotionActiveRequestDto) request.getData();
+
+            return Response.builder()
+                    .success(true)
+                    .data(promotionService.setActive(dto.getPromotionId(), dto.isActive()))
+                    .message(dto.isActive() ? "Đã bật khuyến mại." : "Đã tắt khuyến mại.")
+                    .build();
+        } catch (IllegalArgumentException e) {
+            return Response.builder().success(false).message(e.getMessage()).build();
         } catch (Exception e) {
             return errorResponse(e);
         }

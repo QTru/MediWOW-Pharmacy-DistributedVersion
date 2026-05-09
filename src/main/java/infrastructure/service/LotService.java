@@ -9,4 +9,6 @@ public interface LotService {
     LotDto update(LotDto lotDto);
     LotDto findById(String id);
     List<LotDto> loadAll();
+
+    List<LotDto> findAvailableLotsByProductId(String productId);
 }
