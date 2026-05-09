@@ -33,6 +33,7 @@ public enum CommandType {
     LOT_UPDATE,
     LOT_FIND_BY_ID,
     LOT_LOAD_ALL,
+    LOT_FIND_AVAILABLE_BY_PRODUCT_ID,
 
     // Customer
     CUSTOMER_CREATE,

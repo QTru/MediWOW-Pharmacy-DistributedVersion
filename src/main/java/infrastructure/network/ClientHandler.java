@@ -100,6 +100,7 @@ public class ClientHandler implements Runnable {
             case LOT_UPDATE     -> handleLotUpdate(request);
             case LOT_FIND_BY_ID -> handleLotFindById(request);
             case LOT_LOAD_ALL   -> handleLotLoadAll();
+            case LOT_FIND_AVAILABLE_BY_PRODUCT_ID -> handleLotFindAvailableByProductId(request);
 
             // ── Measurement ───────────────────────────────────────────────────
             case MEASUREMENT_FIND_BY_ID -> handleMeasurementFindById(request);
@@ -319,6 +320,25 @@ public class ClientHandler implements Runnable {
                     .build();
         } catch (IllegalArgumentException e) {
             return Response.builder().success(false).message(e.getMessage()).build();
+        } catch (Exception e) {
+            return errorResponse(e);
+        }
+    }
+
+    private Response handleLotFindAvailableByProductId(Request request) {
+        try {
+            String productId = (String) request.getData();
+
+            return Response.builder()
+                    .success(true)
+                    .data(lotService.findAvailableLotsByProductId(productId))
+                    .message("Tải danh sách lô hàng khả dụng thành công.")
+                    .build();
+        } catch (IllegalArgumentException e) {
+            return Response.builder()
+                    .success(false)
+                    .message(e.getMessage())
+                    .build();
         } catch (Exception e) {
             return errorResponse(e);
         }

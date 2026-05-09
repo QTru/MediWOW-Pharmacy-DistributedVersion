@@ -59,6 +59,18 @@ public class LotServiceImplementation implements LotService {
                 .toList();
     }
 
+    @Override
+    public List<LotDto> findAvailableLotsByProductId(String productId) {
+        if (productId == null || productId.isBlank()) {
+            throw new IllegalArgumentException("Product id cannot be null or blank");
+        }
+
+        return lotRepository.findAvailableLotsByProductId(productId)
+                .stream()
+                .map(Mapper::map)
+                .toList();
+    }
+
     private void checkGeneralInfo(LotDto lotDto) {
         if (lotDto.getBatchNumber() < 1)
             throw new IllegalArgumentException("Batch number must be greater than 0");
