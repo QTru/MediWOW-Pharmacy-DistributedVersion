@@ -471,14 +471,14 @@ public class SalesInvoiceGui extends JPanel implements
                     refreshPromotionChoices();
                     refreshTableAndSummary();
                     setSalesControlsEnabled(true);
-                    if (currentShift == null) {
-                        JOptionPane.showMessageDialog(
-                                SalesInvoiceGui.this,
-                                "Chưa có ca làm việc đang mở trên máy này. Bạn vẫn có thể chuẩn bị hóa đơn, nhưng chưa thể thanh toán.",
-                                "Chưa có ca làm việc",
-                                JOptionPane.INFORMATION_MESSAGE
-                        );
-                    }
+//                    if (currentShift == null) {
+//                        JOptionPane.showMessageDialog(
+//                                SalesInvoiceGui.this,
+//                                "Chưa có ca làm việc đang mở trên máy này. Bạn vẫn có thể chuẩn bị hóa đơn, nhưng chưa thể thanh toán.",
+//                                "Chưa có ca làm việc",
+//                                JOptionPane.INFORMATION_MESSAGE
+//                        );
+//                    }
                 } catch (Exception exception) {
                     setSalesControlsEnabled(true);
                     showError("Không thể tải dữ liệu bán hàng: " + exception.getMessage());
@@ -1296,6 +1296,7 @@ public class SalesInvoiceGui extends JPanel implements
                 .creatorId(currentStaff.getId())
                 .creatorFullName(currentStaff.getFullName())
                 // TODO: .shiftId(currentShift.getId()) — bật lại khi có ca
+                .shiftId(currentShift != null ? currentShift.getId() : null)
                 .prescriptionCode(prescriptionCode.isBlank() ? null : prescriptionCode)
                 .customerPhoneNumber(phoneNumber.isBlank() ? null : phoneNumber)
                 .invoiceLines(lineDtos)

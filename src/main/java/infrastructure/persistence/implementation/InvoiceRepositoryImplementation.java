@@ -24,7 +24,11 @@ public class InvoiceRepositoryImplementation
     public Invoice create(Invoice invoice) {
         return doInTransaction(em -> {
             invoice.setCreator(em.find(Staff.class, invoice.getCreator().getId()));
-            invoice.setShift(em.find(Shift.class, invoice.getShift().getId()));
+            if (invoice.getShift() != null && invoice.getShift().getId() != null && !invoice.getShift().getId().isBlank()) {
+                invoice.setShift(em.find(Shift.class, invoice.getShift().getId()));
+            } else {
+                invoice.setShift(null);
+            }
 
             if (invoice.getCustomer() != null) {
                 String phone = invoice.getCustomer().getPhoneNumber();
