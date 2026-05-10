@@ -55,8 +55,45 @@ public class InvoiceServiceImplementation implements InvoiceService {
     public List<InvoiceDto> loadAll() {
         return invoiceRepository.loadAll()
                 .stream()
-                .map(Mapper::map)
+                .map(this::mapInvoiceForStatistic)
                 .toList();
+    }
+
+    private InvoiceDto mapInvoiceForStatistic(Invoice invoice) {
+        return InvoiceDto.builder()
+                .id(invoice.getId())
+                .type(invoice.getType())
+                .note(invoice.getNote())
+                .creationDate(invoice.getCreationDate())
+                .creatorId(invoice.getCreator() != null ? invoice.getCreator().getId() : null)
+                .creatorFullName(invoice.getCreator() != null ? invoice.getCreator().getFullName() : null)
+                .shiftId(invoice.getShift() != null ? invoice.getShift().getId() : null)
+                .prescriptionCode(invoice.getPrescriptionCode())
+                .customerPhoneNumber(invoice.getCustomer() != null ? invoice.getCustomer().getPhoneNumber() : null)
+                .promotionId(invoice.getPromotion() != null ? invoice.getPromotion().getId() : null)
+                .promotionName(invoice.getPromotion() != null ? invoice.getPromotion().getName() : null)
+                .paymentMethod(invoice.getPaymentMethod())
+                .referencedInvoiceId(invoice.getReferencedInvoice() != null ? invoice.getReferencedInvoice().getId() : null)
+                .invoiceLines(invoice.getInvoiceLines() == null ? List.of()
+                        : invoice.getInvoiceLines().stream()
+                          .map(line -> InvoiceLineDto.builder()
+                                       .invoiceId(invoice.getId())
+                                       .productId(line.getUnitOfMeasure() != null && line.getUnitOfMeasure().getProduct() != null
+                                                  ? line.getUnitOfMeasure().getProduct().getId()
+                                                  : null)
+                                       .measurementId(line.getUnitOfMeasure() != null && line.getUnitOfMeasure().getMeasurement() != null
+                                                      ? line.getUnitOfMeasure().getMeasurement().getId()
+                                                      : null)
+                                       .measurementName(line.getUnitOfMeasure() != null && line.getUnitOfMeasure().getMeasurement() != null
+                                                        ? line.getUnitOfMeasure().getMeasurement().getName()
+                                                        : null)
+                                       .type(line.getType())
+                                       .unitPrice(line.getUnitPrice())
+                                       .quantity(line.getQuantity())
+                                       .lotAllocations(List.of())
+                                       .build())
+                          .toList())
+                .build();
     }
 
     private boolean isPhoneNumberValid(String phoneNumber) {

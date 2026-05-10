@@ -20,6 +20,25 @@ public class InvoiceRepositoryImplementation
         super(Invoice.class);
     }
 
+
+    @Override
+    public List<Invoice> loadAll() {
+        return doInTransaction(em -> em.createQuery("""
+            SELECT DISTINCT i
+            FROM Invoice i
+            LEFT JOIN FETCH i.creator
+            LEFT JOIN FETCH i.customer
+            LEFT JOIN FETCH i.promotion
+            LEFT JOIN FETCH i.referencedInvoice
+            LEFT JOIN FETCH i.invoiceLines il
+            LEFT JOIN FETCH il.unitOfMeasure uom
+            LEFT JOIN FETCH uom.product
+            LEFT JOIN FETCH uom.measurement
+            ORDER BY i.creationDate DESC
+            """, Invoice.class)
+                .getResultList());
+    }
+
     @Override
     public Invoice create(Invoice invoice) {
         return doInTransaction(em -> {

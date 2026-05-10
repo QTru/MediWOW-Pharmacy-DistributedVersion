@@ -108,8 +108,8 @@ public class ClientHandler implements Runnable {
 
             // ── Chưa implement ────────────────────────────────────────────────
             case INVOICE_CREATE     -> handleInvoiceCreate(request);
-            case INVOICE_FIND_BY_ID -> notImplemented();
-            case INVOICE_LOAD_ALL   -> notImplemented();
+            case INVOICE_FIND_BY_ID -> handleInvoiceFindById(request);
+            case INVOICE_LOAD_ALL   -> handleInvoiceLoadAll();
 
             case SHIFT_CREATE     -> notImplemented();
             case SHIFT_UPDATE     -> notImplemented();
@@ -127,6 +127,37 @@ public class ClientHandler implements Runnable {
             case PROMOTION_LOAD_ALL -> handlePromotionLoadAll();
             case PROMOTION_LOAD_ACTIVE -> handlePromotionLoadActive();
         };
+    }
+
+    private Response handleInvoiceLoadAll() {
+        try {
+            return Response.builder()
+                    .success(true)
+                    .data(invoiceService.loadAll())
+                    .message("Tải danh sách hóa đơn thành công.")
+                    .build();
+        } catch (Exception e) {
+            return errorResponse(e);
+        }
+    }
+
+    private Response handleInvoiceFindById(Request request) {
+        try {
+            String id = (String) request.getData();
+
+            return Response.builder()
+                    .success(true)
+                    .data(invoiceService.findById(id))
+                    .message("Tìm hóa đơn thành công.")
+                    .build();
+        } catch (IllegalArgumentException e) {
+            return Response.builder()
+                    .success(false)
+                    .message(e.getMessage())
+                    .build();
+        } catch (Exception e) {
+            return errorResponse(e);
+        }
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
