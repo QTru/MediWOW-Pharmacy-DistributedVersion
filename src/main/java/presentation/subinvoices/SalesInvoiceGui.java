@@ -136,6 +136,17 @@ public class SalesInvoiceGui extends JPanel implements
         setBackground(AppColors.BACKGROUND);
         buildUi();
         loadInitialData();
+        startAutoRefreshLots();
+    }
+
+    private void startAutoRefreshLots() {
+        Timer timer = new Timer(5000, e -> {
+            if (invoiceLines.isEmpty()) {
+                loadInitialData();
+            }
+        });
+        timer.setInitialDelay(5000);
+        timer.start();
     }
 
     private void buildUi() {

@@ -1,108 +1,162 @@
 package infrastructure.persistence.implementation;
 
 import core.entities.*;
-import core.entities.enums.InvoiceLineType;
-import core.entities.enums.InvoiceType;
-import core.entities.enums.PaymentMethod;
+import core.entities.enums.LotStatus;
 import infrastructure.persistence.InvoiceRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.LockModeType;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
-public class InvoiceRepositoryImplementation extends AbstractGenericRepositoryImplementation<Invoice, String> implements InvoiceRepository {
-    private final CustomerRepositoryImplementation customerRepository;
+public class InvoiceRepositoryImplementation
+        extends AbstractGenericRepositoryImplementation<Invoice, String>
+        implements InvoiceRepository {
 
     public InvoiceRepositoryImplementation() {
         super(Invoice.class);
-        customerRepository = new CustomerRepositoryImplementation();
     }
 
     @Override
     public Invoice create(Invoice invoice) {
         return doInTransaction(em -> {
             invoice.setCreator(em.find(Staff.class, invoice.getCreator().getId()));
-            // TODO: Bật lại khi hoàn thiện cơ chế ca
-            if (invoice.getShift() != null)
-                invoice.setShift(em.find(Shift.class, invoice.getShift().getId()));
+            invoice.setShift(em.find(Shift.class, invoice.getShift().getId()));
 
             if (invoice.getCustomer() != null) {
-                Customer customer = customerRepository.findByPhoneNumber(invoice.getCustomer().getPhoneNumber());
-                if (customer != null)
-                    invoice.setCustomer(em.merge(customer));
-                else
+                String phone = invoice.getCustomer().getPhoneNumber();
+
+                Customer existingCustomer = em.createQuery(
+                                "FROM Customer c WHERE c.phoneNumber = :phone",
+                                Customer.class
+                        )
+                        .setParameter("phone", phone)
+                        .setMaxResults(1)
+                        .getResultStream()
+                        .findFirst()
+                        .orElse(null);
+
+                if (existingCustomer != null) {
+                    invoice.setCustomer(existingCustomer);
+                } else {
                     invoice.getCustomer().setCreationDate(LocalDateTime.now());
+                }
+            }
+
+            if (invoice.getPromotion() != null) {
+                invoice.setPromotion(em.find(Promotion.class, invoice.getPromotion().getId()));
+            }
+
+            if (invoice.getReferencedInvoice() != null) {
+                invoice.setReferencedInvoice(em.find(Invoice.class, invoice.getReferencedInvoice().getId()));
             }
 
             invoice.setInvoiceLines(invoice.getInvoiceLines().stream().map(invoiceLine -> {
                 invoiceLine.setInvoice(invoice);
-                invoiceLine.setUnitOfMeasure(em.find(UnitOfMeasure.class,  // ← Change to find
+
+                UnitOfMeasure uom = em.find(
+                        UnitOfMeasure.class,
                         UnitOfMeasure.UnitOfMeasureId.builder()
                                 .product(invoiceLine.getUnitOfMeasure().getProduct().getId())
                                 .measurement(invoiceLine.getUnitOfMeasure().getMeasurement().getId())
-                                .build()));
+                                .build()
+                );
 
-                invoiceLine.setLotAllocations(invoiceLine.getLotAllocations().stream().map(lotAllocation -> {
-                    lotAllocation.setInvoiceLine(invoiceLine);
-                    Lot lot = em.find(Lot.class, lotAllocation.getLot().getId());
-                    if (lot == null) {
-                        throw new IllegalArgumentException("Lot not found: " + lotAllocation.getLot().getId());
-                    }
-                    if (lot.getQuantity() < lotAllocation.getQuantity()) {
-                        throw new IllegalArgumentException("Insufficient quantity in lot: " + lot.getId());
-                    }
-                    lot.setQuantity(lot.getQuantity() - lotAllocation.getQuantity());
-                    lotAllocation.setLot(lot);
-                    return lotAllocation;
-                }).toList());
+                if (uom == null) {
+                    throw new IllegalArgumentException("UnitOfMeasure not found");
+                }
 
+                invoiceLine.setUnitOfMeasure(uom);
+
+                List<LotAllocation> freshAllocations = allocateLotsFreshAndLocked(
+                        em,
+                        invoiceLine,
+                        uom.getProduct().getId()
+                );
+
+                invoiceLine.setLotAllocations(freshAllocations);
                 return invoiceLine;
             }).toList());
-
-            if (invoice.getPromotion() != null)
-                invoice.setPromotion(em.find(Promotion.class, invoice.getPromotion().getId()));
-            if (invoice.getReferencedInvoice() != null)
-                invoice.setReferencedInvoice(em.find(Invoice.class, invoice.getReferencedInvoice().getId()));
 
             em.persist(invoice);
             return invoice;
         });
     }
 
-    public static void main(String[] args) {
-        InvoiceRepository invoiceRepository = new InvoiceRepositoryImplementation();
+    private List<LotAllocation> allocateLotsFreshAndLocked(
+            EntityManager em,
+            InvoiceLine invoiceLine,
+            String productId
+    ) {
+        int remainingNeeded = convertToBaseQuantity(
+                invoiceLine.getQuantity(),
+                invoiceLine.getUnitOfMeasure()
+        );
 
-        Invoice invoice = Invoice
-            .builder()
-            .type(InvoiceType.RETURN)
-            .creationDate(LocalDateTime.now())
-            .creator(Staff.builder().id("STA0001").build())
-            .shift(Shift.builder().id("SHI000001").build())
-            .invoiceLines(List.of(
-                InvoiceLine
-                    .builder()
-                    .type(InvoiceLineType.SALE)
-                    .unitPrice(BigDecimal.valueOf(900))
-                    .quantity(2)
-                    .unitOfMeasure(UnitOfMeasure.builder()
-                        .product(Product.builder().id("PRO000001").build())
-                        .measurement(Measurement.builder().id("MEA0001").build())
-                        .baseUnit(true)
-                        .baseUnitConversionRate(BigDecimal.ONE)
-                        .build())
-                    .lotAllocations(List.of(
-                        LotAllocation
-                            .builder()
-                            .lot(Lot.builder().id("LOT000001").build())
-                            .quantity(2)
-                            .build()
-                    ))
-                    .build()
-            ))
-            .paymentMethod(PaymentMethod.CASH_PAYMENT)
-            .referencedInvoice(Invoice.builder().id("INV000002").build())
-            .build();
+        List<Lot> lockedLots = em.createQuery("""
+                        FROM Lot l
+                        WHERE l.product.id = :productId
+                          AND l.status = :status
+                          AND l.quantity > 0
+                          AND l.expiryDate > :now
+                        ORDER BY l.expiryDate ASC, l.id ASC
+                        """, Lot.class)
+                .setParameter("productId", productId)
+                .setParameter("status", LotStatus.AVAILABLE)
+                .setParameter("now", LocalDateTime.now())
+                .setLockMode(LockModeType.PESSIMISTIC_WRITE)
+                .getResultList();
 
-        invoiceRepository.create(invoice);
+        List<LotAllocation> allocations = new ArrayList<>();
+
+        for (Lot lot : lockedLots) {
+            if (remainingNeeded <= 0) {
+                break;
+            }
+
+            int take = Math.min(lot.getQuantity(), remainingNeeded);
+
+            lot.setQuantity(lot.getQuantity() - take);
+
+            LotAllocation allocation = LotAllocation.builder()
+                    .invoiceLine(invoiceLine)
+                    .lot(lot)
+                    .quantity(take)
+                    .build();
+
+            allocations.add(allocation);
+            remainingNeeded -= take;
+        }
+
+        if (remainingNeeded > 0) {
+            throw new IllegalArgumentException(
+                    "Không đủ tồn kho cho sản phẩm "
+                            + productId
+                            + ". Còn thiếu "
+                            + remainingNeeded
+                            + " đơn vị gốc."
+            );
+        }
+
+        return allocations;
+    }
+
+    private int convertToBaseQuantity(int quantity, UnitOfMeasure uom) {
+        if (uom == null || uom.isBaseUnit()) {
+            return quantity;
+        }
+
+        BigDecimal rate = uom.getBaseUnitConversionRate();
+        if (rate == null || rate.compareTo(BigDecimal.ZERO) <= 0) {
+            return quantity;
+        }
+
+        return BigDecimal.valueOf(quantity)
+                .multiply(rate)
+                .setScale(0, RoundingMode.CEILING)
+                .intValue();
     }
 }
